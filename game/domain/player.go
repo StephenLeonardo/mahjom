@@ -11,3 +11,11 @@ type PlayerState struct {
 
 	Score int
 }
+
+func (p *PlayerState) GetFlowerCount() int {
+	return len(p.Flowers)
+}
+
+func (p *PlayerState) GetAnimalCount() int {
+	return len(p.Animals)
+}
