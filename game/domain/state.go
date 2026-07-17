@@ -13,11 +13,10 @@ type GameState struct {
 func (g *GameState) DealInitialHands() {
 	for playerIndex := range g.Players {
 		for range 13 {
-			tile, ok := g.drawInitialHandTile(&g.Players[playerIndex])
+			_, ok := g.drawInitialHandTile(&g.Players[playerIndex])
 			if !ok {
 				return
 			}
-			g.Players[playerIndex].Hand = append(g.Players[playerIndex].Hand, tile)
 		}
 	}
 
@@ -25,7 +24,6 @@ func (g *GameState) DealInitialHands() {
 	if !ok {
 		return
 	}
-	g.Players[East].Hand = append(g.Players[East].Hand, dealerTile)
 	g.Round.CurrentPlayer = SeatIndex(East)
 	g.Round.NewlyDrawnTile = dealerTile
 	g.Round.Phase = PhasePlay
@@ -42,10 +40,11 @@ func (g *GameState) drawInitialHandTile(player *PlayerState) (*Tile, bool) {
 
 		switch {
 		case tile.IsFlower():
-			player.Flowers = append(player.Flowers, tile)
+			player.AddTile(tile)
 		case tile.IsAnimal():
-			player.Animals = append(player.Animals, tile)
+			player.AddTile(tile)
 		default:
+			player.AddTile(tile)
 			return tile, true
 		}
 	}

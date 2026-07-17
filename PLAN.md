@@ -28,12 +28,12 @@ Goal: create a ready-to-play `Game` without setup code in `main.go`.
 
 Goal: make hand mutation safe, reusable, and predictable.
 
-- [ ] Add a stable tile sort order in `game/domain/tile.go` or `player.go`: Wan, Bamboo, Dot, winds, dragons.
-- [ ] Add `PlayerState.SortHand()` in `game/domain/player.go`.
-- [ ] Add a helper to find a tile in a hand by `TileID`.
-- [ ] Add `PlayerState.RemoveFromHand(id TileID) (*Tile, bool)`.
-- [ ] Add helpers for adding a normal tile, flower, or animal to the proper player collection.
-- [ ] Add tests for sorting, duplicate-looking physical tiles, removal, and missing tile IDs.
+- [x] Add a stable tile sort order in `game/domain/tile.go` or `player.go`: Wan, Bamboo, Dot, winds, dragons.
+- [x] Add `PlayerState.SortHand()` in IPlayerState interface and implement in `game/domain/player.go`.
+- [x] Add a helper to find a tile in a hand by `TileID`.
+- [x] Add `PlayerState.RemoveFromHand(id TileID) (*Tile, bool)`.
+- [x] Add helpers for adding a normal tile, flower, or animal to the proper player collection.
+- [x] Add tests for sorting, duplicate-looking physical tiles, removal, and missing tile IDs.
 
 ## Phase 3: Normal Turn Flow
 

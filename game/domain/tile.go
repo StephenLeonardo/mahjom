@@ -74,3 +74,7 @@ func (t *Tile) IsFlower() bool {
 func (t *Tile) IsAnimal() bool {
 	return t.Suit == SuitAnimal
 }
+
+func (t *Tile) IsBonus() bool {
+	return t.IsFlower() || t.IsAnimal()
+}

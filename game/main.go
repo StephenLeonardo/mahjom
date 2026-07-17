@@ -11,6 +11,7 @@ func main() {
 
 	fmt.Println("-------------------------")
 	fmt.Println("East Player")
+	game.State.Players[domain.East].SortHand()
 	for _, tile := range game.State.Players[domain.East].Hand {
 		fmt.Println(tile.Describe())
 	}
@@ -19,6 +20,7 @@ func main() {
 
 	fmt.Println("-------------------------")
 	fmt.Println("South Player")
+	game.State.Players[domain.South].SortHand()
 	for _, tile := range game.State.Players[domain.South].Hand {
 		fmt.Println(tile.Describe())
 	}
@@ -27,6 +29,7 @@ func main() {
 
 	fmt.Println("-------------------------")
 	fmt.Println("West Player")
+	game.State.Players[domain.West].SortHand()
 	for _, tile := range game.State.Players[domain.West].Hand {
 		fmt.Println(tile.Describe())
 	}
@@ -35,6 +38,7 @@ func main() {
 
 	fmt.Println("-------------------------")
 	fmt.Println("North Player")
+	game.State.Players[domain.North].SortHand()
 	for _, tile := range game.State.Players[domain.North].Hand {
 		fmt.Println(tile.Describe())
 	}
