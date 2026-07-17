@@ -137,6 +137,24 @@ not invent conflicting behavior elsewhere.
   immediately; if it is a bonus tile it is exposed and the player keeps
   drawing until a normal tile is drawn, then discards. Self-draw wins off
   the Kong replacement tile are evaluated as normal self-drawn wins.
+- **Post-claim turn flow (Kong vs. Pong/Chow):** after a successful Kong,
+  the claimant draws a replacement tile and then discards. After a
+  successful Pong or Chow, the claimant does **not** draw — the state
+  machine goes straight to discard. In all three cases the claimant
+  becomes the new `CurrentPlayer`. Kong is the only claim type that
+  consumes a wall tile.
+- **Concealed-Kong chaining:** a player who draws a tile that completes
+  a 4-of-a-kind may declare another concealed Kong immediately. There is
+  no cap on the number of chained kongs per turn; each declaration
+  triggers another replacement draw. The chain ends when the player
+  draws a tile that does not complete a Kong, at which point they
+  discard.
+- **Upgrade exposed Pong to Kong:** a player holding an exposed Pong may
+  self-draw the fourth matching tile and upgrade the existing Meld to a
+  Kong (recorded as `KongExposed`; the `KongAdded` enum value is
+  reserved but not semantically distinct in this implementation). The
+  fourth tile is added to the existing Meld's `Tiles`, and the player
+  draws a replacement.
 - **Claim priority:** when multiple players can legally claim the same
   discard, the seat closest-next to the discarder in turn order wins, with
   type priority Kong > Pong > Chow. The discarder never claims their own

@@ -78,6 +78,30 @@ can rely on them):
   in `PlayerState.Flowers` / `PlayerState.Animals` and the player keeps
   drawing until a normal tile is drawn, then discards. Self-draw wins off
   the Kong replacement tile are evaluated as normal self-drawn wins.
+- **Post-claim turn flow (Kong vs. Pong/Chow):** after a successful Kong,
+  the claimant draws a replacement tile (with normal bonus-tile
+  replacement) and then discards. After a successful Pong or Chow, the
+  claimant does **not** draw — the state machine goes straight to
+  discard. In all three cases the claimant becomes the new
+  `CurrentPlayer`. Kong is therefore the only claim type that consumes a
+  wall tile.
+- **Concealed-Kong chaining:** a player who draws a tile that completes
+  a 4-of-a-kind may declare another concealed Kong immediately (no cap on
+  the number of chained kongs per turn). Each declaration triggers
+  another replacement draw. The chain ends when the player draws a tile
+  that does not complete a Kong, at which point they must discard.
+- **Upgrade exposed Pong to Kong:** a player holding an exposed Pong may
+  self-draw the fourth matching tile and upgrade the existing Meld to a
+  Kong (treated as `KongExposed`; `KongAdded` is reserved but not
+  semantically distinct in this implementation). The fourth tile is
+  added to the existing Meld's `Tiles`, and the player draws a
+  replacement.
+- **Action type exclusivity per declaration:** during a `ClaimWindow`,
+  each seat declares at most one action (Pong, Kong, Chow, or Pass). A
+  seat cannot declare two claim types on the same discard. Self-actions
+  such as concealed-Kong declarations and Pong-upgrade-to-Kong only
+  happen during `PhasePlay` on the active player's turn and are not
+  routed through the claim window.
 - **Tie-breaking on competing claims:** when multiple players can legally
   claim the same discard (e.g. Kong vs. Pong, or two Pongs), the seat
   closest-next to the discarder in turn order wins. The discarder never
@@ -104,6 +128,10 @@ Tasks:
       discard only.
 - [ ] Implement exposed and concealed kongs, including replacement draws
       and the draw+discard cycle that follows a Kong declaration.
+- [ ] Support upgrade of an exposed Pong to a Kong on a self-drawn fourth
+      tile, including the replacement draw.
+- [ ] Support concealed-Kong chaining across successive replacement draws
+      until a non-completing tile is drawn.
 - [ ] Close a claim window on pass or once the highest-priority legal claim
       resolves; the turn then proceeds per the claim type's flow.
 - [ ] Add tests for legal and illegal claims, multiple claimants, priority
