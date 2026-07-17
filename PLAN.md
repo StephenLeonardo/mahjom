@@ -54,15 +54,60 @@ Goal: support draw then discard, starting from East's opening discard.
 
 Goal: let players claim a discard legally and represent the resulting meld.
 
+House rules pinned before coding this phase (recorded here so future phases
+can rely on them):
+
+- **Chow:** allowed. Only the player seated immediately after the discarder
+  (the next player in turn order) may claim a Chow. The two players seated
+  before the discarder cannot Chow. Chow is only valid on suited tiles and
+  only on a discard (not on a self-drawn tile).
+- **Pong:** any player may Pong a discard of a tile they hold two copies of.
+  Pong consumes 2 hand tiles + 1 discard and exposes a triplet.
+- **Kong (exposed):** any player may Kong a discard of a tile they hold three
+  copies of. Forms an exposed Kong of 4 tiles (3 hand + 1 discard).
+- **Kong (concealed):** a player holding a concealed pung may declare Kong
+  when they self-draw the fourth matching tile. Forms a concealed Kong of 4
+  tiles.
+- **Robbing the Kong (抢杠):** not allowed. A concealed Kong cannot be
+  intercepted for a win. The discard claim window closes as soon as a Kong
+  is declared; no second window opens on a concealed-Kong upgrade.
+- **Kong turn flow (algorithm view):** declaring a Kong transitions the
+  current player to the Kong claimant, who then performs a normal
+  draw+discard cycle before the turn passes on. The replacement draw is
+  mandatory and happens immediately; if it is a bonus tile it is exposed
+  in `PlayerState.Flowers` / `PlayerState.Animals` and the player keeps
+  drawing until a normal tile is drawn, then discards. Self-draw wins off
+  the Kong replacement tile are evaluated as normal self-drawn wins.
+- **Tie-breaking on competing claims:** when multiple players can legally
+  claim the same discard (e.g. Kong vs. Pong, or two Pongs), the seat
+  closest-next to the discarder in turn order wins. The discarder never
+  claims their own discard.
+- **Last-tile self-draw win:** legal. A draw that exhausts the wall can
+  still be a winning tile if the resulting hand satisfies the winning
+  pattern.
+- **Priority order when types differ:** Kong > Pong > Chow. Chow is only
+  considered for the next-player seat; Kong and Pong compete across all
+  seats using the closest-next tiebreak.
+- **Bonus tiles in claims:** flowers and animals are exposed on draw and
+  never appear in `Discards`, so they cannot be claimed for any meld.
+
+Tasks:
+
 - [ ] Define precise `Meld` and `KongType` invariants in `game/domain/meld.go`.
 - [ ] Add helpers to count matching tiles and select required hand tiles.
-- [ ] Open a `ClaimWindow` after every discard.
-- [ ] Implement claim priority and seat ordering according to the selected Singapore Mahjong ruleset.
+- [ ] Open a `ClaimWindow` after every discard (one window per discard, no
+      re-opens for concealed-Kong upgrades).
+- [ ] Implement claim priority and seat ordering per the house rules above
+      (Kong > Pong > Chow; closest-next seat wins ties; discarder excluded).
 - [ ] Implement `Pong`: consume two matching hand tiles plus the discard.
-- [ ] Implement `Chow`: allow only the next player to take a suited-tile sequence, if permitted by the ruleset.
-- [ ] Implement exposed and concealed kongs, including replacement draws.
-- [ ] Close a claim window on pass or once the highest-priority legal claim resolves.
-- [ ] Add tests for legal and illegal claims, multiple claimants, and priority resolution.
+- [ ] Implement `Chow`: next-player-only, suited-tile sequences only, on
+      discard only.
+- [ ] Implement exposed and concealed kongs, including replacement draws
+      and the draw+discard cycle that follows a Kong declaration.
+- [ ] Close a claim window on pass or once the highest-priority legal claim
+      resolves; the turn then proceeds per the claim type's flow.
+- [ ] Add tests for legal and illegal claims, multiple claimants, priority
+      resolution, and the no-robbing-the-Kong rule.
 
 ## Phase 5: Winning-Hand Validation
 
@@ -87,13 +132,18 @@ Goal: score a declared win and end the round consistently.
 - [ ] Apply score changes to all four players.
 - [ ] Transition the round to `PhaseRoundEnd` and prevent further actions.
 - [ ] Add score tests for self-draw, discard wins, minimum tai, and bonus tiles.
+- [ ] Include a self-draw win off the last wall tile in scoring tests, since
+      it is a legal win path under the house rules.
 
 ## Phase 7: Round Progression and End Conditions
 
 Goal: finish non-winning rounds and support repeated rounds.
 
 - [ ] Define when the wall is exhausted and whether a final-tile draw is allowed.
-- [ ] End the round as a draw when no legal draw remains.
+- [ ] End the round as a draw when no legal draw remains. Note: the last
+      legal draw is still a win path (self-draw off the final wall tile);
+      round draws only happen when a player must draw but the wall is empty
+      *and* the resulting hand is not a winning hand.
 - [ ] Record dealer retention and round-wind progression rules.
 - [ ] Add a method to reset per-round state while preserving player scores.
 - [ ] Test dealer wins, dealer losses, drawn rounds, and consecutive rounds.
