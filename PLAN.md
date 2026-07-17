@@ -39,16 +39,16 @@ Goal: make hand mutation safe, reusable, and predictable.
 
 Goal: support draw then discard, starting from East's opening discard.
 
-- [ ] Add `Game.DrawForCurrentPlayer() error` in `game/domain/game.go`.
-- [ ] Draw a normal tile from the wall into the current player's hand.
-- [ ] If the tile is a flower or animal, expose it and continue drawing a replacement.
-- [ ] Update `Round.NewlyDrawnTile` with the final normal tile.
-- [ ] Add `Game.Discard(player SeatIndex, id TileID) error`.
-- [ ] Reject discards when it is not the player's turn, the round is not in `PhasePlay`, or the tile is absent.
-- [ ] Move the discarded tile to `PlayerState.Discards`; set `Round.LastDiscard` and `Round.LastDiscardBy`.
-- [ ] Clear `NewlyDrawnTile` after a discard.
-- [ ] Advance to the next seat only if no player claims the discard.
-- [ ] Add turn-flow tests for East's opening discard and a later player's draw/discard cycle.
+- [x] Add `Game.DrawForCurrentPlayer() error` in `game/domain/game.go`.
+- [x] Draw a normal tile from the wall into the current player's hand.
+- [x] If the tile is a flower or animal, expose it and continue drawing a replacement.
+- [x] Update `Round.NewlyDrawnTile` with the final normal tile.
+- [x] Add `Game.Discard(player SeatIndex, id TileID) error`.
+- [x] Reject discards when it is not the player's turn, the round is not in `PhasePlay`, or the tile is absent.
+- [x] Move the discarded tile to `PlayerState.Discards`; set `Round.LastDiscard` and `Round.LastDiscardBy`.
+- [x] Clear `NewlyDrawnTile` after a discard.
+- [x] Advance to the next seat only if no player claims the discard.
+- [x] Add turn-flow tests for East's opening discard and a later player's draw/discard cycle.
 
 ## Phase 4: Claims and Melds
 
