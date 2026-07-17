@@ -18,4 +18,5 @@ func main() {
 	for _, tile := range wall.DrawPile {
 		fmt.Println(tile.Describe())
 	}
+
 }

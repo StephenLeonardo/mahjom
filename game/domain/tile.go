@@ -66,3 +66,11 @@ func (t *Tile) Describe() string {
 	}
 	return fmt.Sprintf("Unknown tile (suit %d, rank %d)", t.Suit, t.Rank)
 }
+
+func (t *Tile) IsFlower() bool {
+	return t.Suit == SuitFlower
+}
+
+func (t *Tile) IsAnimal() bool {
+	return t.Suit == SuitAnimal
+}
