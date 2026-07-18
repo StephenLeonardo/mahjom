@@ -84,3 +84,12 @@ func (p *PlayerState) RemoveFromHand(id TileID) (*Tile, bool) {
 	}
 	return nil, false
 }
+
+func (p *PlayerState) AddToMelds(claimDecl *ClaimDecl) {
+	p.Melds = append(p.Melds, &Meld{
+		Type:     claimDecl.Type,
+		Kong:     claimDecl.Kong,
+		Tiles:    claimDecl.Tiles,
+		FromSeat: claimDecl.Discarder,
+	})
+}

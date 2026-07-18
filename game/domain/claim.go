@@ -6,11 +6,12 @@ package domain
 // this declaration wins. Resolved() is set on the winning ClaimDecl after
 // ClaimWindow.Resolve runs.
 type ClaimDecl struct {
-	Claimant SeatIndex
-	Type     MeldType // MeldPong, MeldKong, or MeldChow
-	Kong     KongType // only meaningful when Type == MeldKong (KongExposed)
-	Tile     *Tile    //  Deprecated
-	Tiles    []*Tile
+	Discarder SeatIndex
+	Claimant  SeatIndex
+	Type      MeldType // MeldPong, MeldKong, or MeldChow
+	Kong      KongType // only meaningful when Type == MeldKong (KongExposed)
+	Tile      *Tile    //  Deprecated
+	Tiles     []*Tile
 }
 
 // ClaimAction is what a non-active player sends back to the engine during a

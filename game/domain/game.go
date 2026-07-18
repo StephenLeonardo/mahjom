@@ -2,19 +2,23 @@ package domain
 
 import (
 	"errors"
+	"fmt"
+	"sort"
 	"time"
 )
 
 var (
-	ErrRoundNotInPlay = errors.New("round is not in play")
-	ErrMustDraw       = errors.New("player must draw before discarding")
-	ErrMustDiscard    = errors.New("player must discard before drawing")
-	ErrTileNotInHand  = errors.New("tile is not in the player's hand")
-	ErrTileNotClaim   = errors.New("tile is not claimable for the requested meld")
-	ErrNotClaimSeat   = errors.New("it is not this seat's turn to declare or pass")
-	ErrAlreadyActed   = errors.New("seat has already declared or passed in this claim window")
-	ErrClaimClosed    = errors.New("claim window is not open")
-	ErrWallEmpty      = errors.New("wall is empty")
+	ErrRoundNotInPlay    = errors.New("round is not in play")
+	ErrRoundNotInDiscard = errors.New("round is not in discard")
+	ErrMustDraw          = errors.New("player must draw before discarding")
+	ErrMustDiscard       = errors.New("player must discard before drawing")
+	ErrTileNotInHand     = errors.New("tile is not in the player's hand")
+	ErrTileNotClaim      = errors.New("tile is not claimable for the requested meld")
+	ErrNotClaimSeat      = errors.New("it is not this seat's turn to declare or pass")
+	ErrAlreadyActed      = errors.New("seat has already declared or passed in this claim window")
+	ErrClaimClosed       = errors.New("claim window is not open")
+	ErrWallEmpty         = errors.New("wall is empty")
+	ErrCheckWinClosed    = errors.New("not the time to check win")
 )
 
 type Game struct {
@@ -32,8 +36,22 @@ func NewGame(id string, config *GameConfig, seed uint64) *Game {
 		State: &GameState{
 			Round: Round{
 				Phase:         PhaseDealing,
-				CurrentPlayer: SeatIndex(East),
+				CurrentPlayer: SeatIndex(West),
 				LastDiscardBy: SeatNone,
+			},
+			Players: [4]*PlayerState{
+				{
+					ID: "1",
+				},
+				{
+					ID: "2",
+				},
+				{
+					ID: "3",
+				},
+				{
+					ID: "4",
+				},
 			},
 			Wall: Wall{DrawPile: wallTiles},
 		},
@@ -51,15 +69,26 @@ func (g *Game) DrawForCurrentPlayer() error {
 	if round.Phase != PhasePlay {
 		return ErrRoundNotInPlay
 	}
-	if round.NewlyDrawnTile != nil {
-		return ErrMustDiscard
-	}
 
 	tile, ok := g.State.drawHandTile(g.State.Players[round.CurrentPlayer])
 	if !ok {
 		return ErrWallEmpty
 	}
 	round.NewlyDrawnTile = tile
+	round.Phase = PhaseCheckWin
+	return nil
+}
+
+func (g *Game) ResolveWin() error {
+	round := &g.State.Round
+	if round.Phase != PhaseCheckWin {
+		return ErrCheckWinClosed
+	}
+	if IsSimpleWinningHand(g.State.Players[round.CurrentPlayer]) {
+		round.Phase = PhaseWin
+		return nil
+	}
+	round.Phase = PhaseDiscard
 	return nil
 }
 
@@ -73,12 +102,12 @@ func (g *Game) DrawForCurrentPlayer() error {
 //     must draw.
 func (g *Game) Discard(id TileID) error {
 	round := &g.State.Round
-	if round.Phase != PhasePlay {
-		return ErrRoundNotInPlay
+	if round.Phase != PhaseDiscard {
+		return ErrRoundNotInDiscard
 	}
-	if round.NewlyDrawnTile == nil {
-		return ErrMustDraw
-	}
+	// if round.NewlyDrawnTile == nil {
+	// 	return ErrMustDraw
+	// }
 
 	player := round.CurrentPlayer
 	tile, ok := g.State.Players[player].RemoveFromHand(id)
@@ -133,6 +162,7 @@ func (g *Game) getAllEligibleClaims(state *GameState, round *Round) [][]*ClaimDe
 	lastDiscard := round.LastDiscard
 	for playerIndex := range state.Players {
 		if SeatIndex(playerIndex) == lastDiscardBy {
+			res[playerIndex] = []*ClaimDecl{}
 			continue
 		}
 		currPlayerPossibleClaims := g.generateAllPossibleClaimsForPlayer(lastDiscardBy, SeatIndex(playerIndex), lastDiscard)
@@ -142,12 +172,13 @@ func (g *Game) getAllEligibleClaims(state *GameState, round *Round) [][]*ClaimDe
 	return res
 }
 
-func (g *Game) convertTilesToClaimDecl(claimantIndex SeatIndex, tiles []*Tile, meldType MeldType, kongType KongType) *ClaimDecl {
+func (g *Game) convertTilesToClaimDecl(discarder, claimantIndex SeatIndex, tiles []*Tile, meldType MeldType, kongType KongType) *ClaimDecl {
 	claimDecl := &ClaimDecl{
-		Claimant: claimantIndex,
-		Type:     meldType,
-		Kong:     kongType,
-		Tiles:    tiles,
+		Discarder: discarder,
+		Claimant:  claimantIndex,
+		Type:      meldType,
+		Kong:      kongType,
+		Tiles:     tiles,
 	}
 
 	return claimDecl
@@ -162,12 +193,12 @@ func (g *Game) generateAllPossibleClaimsForPlayer(discarder, playerIndex SeatInd
 		case MeldPong:
 			tiles := getMatchingInHand(player, discard)
 			if len(tiles) >= 3 {
-				res = append(res, g.convertTilesToClaimDecl(playerIndex, tiles[:3], MeldPong, KongNone))
+				res = append(res, g.convertTilesToClaimDecl(discarder, playerIndex, tiles[:3], MeldPong, KongNone))
 			}
 		case MeldKong:
 			tiles := getMatchingInHand(player, discard)
 			if len(tiles) >= 4 {
-				res = append(res, g.convertTilesToClaimDecl(playerIndex, tiles[:4], MeldKong, KongExposed))
+				res = append(res, g.convertTilesToClaimDecl(discarder, playerIndex, tiles[:4], MeldKong, KongExposed))
 			}
 		case MeldChow:
 			// Chow is only valid on suited tiles (Wan/Bamboo/Dot).
@@ -182,10 +213,14 @@ func (g *Game) generateAllPossibleClaimsForPlayer(discarder, playerIndex SeatInd
 			}
 			chowTiles := getAllPossibleChowCombinations(player, discard)
 			for _, tiles := range chowTiles {
-				res = append(res, g.convertTilesToClaimDecl(playerIndex, tiles, MeldChow, KongNone))
+				res = append(res, g.convertTilesToClaimDecl(discarder, playerIndex, tiles, MeldChow, KongNone))
 			}
 		}
 	}
+
+	sort.Slice(res, func(i, j int) bool {
+		return res[i].Type > res[j].Type
+	})
 
 	return res
 }
@@ -215,26 +250,65 @@ func getAllPossibleChowCombinations(p *PlayerState, discard *Tile) [][]*Tile {
 	// Case A: Discard is High (D-2, D-1, D)
 	if discard.Rank >= 3 {
 		t1, t2 := findTiles(discard.Suit, discard.Rank-2), findTiles(discard.Suit, discard.Rank-1)
-		if t1 != nil || t2 != nil {
+		if t1 != nil && t2 != nil {
 			results = append(results, []*Tile{t1, t2, discard})
 		}
 	}
 	// Case B: Discard is Middle (D-1, D, D+1)
 	if discard.Rank >= 2 && discard.Rank <= 8 {
 		t1, t3 := findTiles(discard.Suit, discard.Rank-1), findTiles(discard.Suit, discard.Rank+1)
-		if t1 != nil || t3 != nil {
+		if t1 != nil && t3 != nil {
 			results = append(results, []*Tile{t1, discard, t3})
 		}
 	}
 	// Case C: Discard is Low (D, D+1, D+2)
 	if discard.Rank <= 7 {
 		t2, t3 := findTiles(discard.Suit, discard.Rank+1), findTiles(discard.Suit, discard.Rank+2)
-		if t2 != nil || t3 != nil {
+		if t2 != nil && t3 != nil {
 			results = append(results, []*Tile{discard, t2, t3})
 		}
 	}
 
 	return results
+}
+
+func (g *Game) ResolveClaim() error {
+	claimDecl := g.State.Round.ClaimV2.Winner
+	round := &g.State.Round
+	if round.Phase != PhaseClaim {
+		return ErrClaimClosed
+	}
+	round.Phase = PhaseCheckWin
+	round.Claim = nil
+	round.ClaimV2 = nil
+
+	if claimDecl == nil {
+		round.CurrentPlayer = nextSeatAfter(round.CurrentPlayer)
+		round.Phase = PhasePlay
+		return nil
+	}
+	round.CurrentPlayer = claimDecl.Claimant
+
+	claimant := g.State.Players[claimDecl.Claimant]
+	for _, tile := range claimDecl.Tiles {
+		if tile.ID == round.LastDiscard.ID {
+			continue
+		}
+		if _, ok := claimant.RemoveFromHand(tile.ID); !ok {
+			fmt.Printf("!!!!!!! Can not find tile rank: %d, suit: %d from player: %d !!!!!!!\n", tile.Rank, tile.Suit, claimDecl.Claimant)
+		}
+	}
+	claimant.AddToMelds(claimDecl)
+
+	if claimDecl.Type == MeldKong {
+		tile, ok := g.State.drawHandTile(claimant)
+		if !ok {
+			return ErrWallEmpty
+		}
+		round.NewlyDrawnTile = tile
+	}
+
+	return nil
 }
 
 // ActionClaim processes a ClaimAction from the seat whose turn it is in
@@ -246,6 +320,7 @@ func getAllPossibleChowCombinations(p *PlayerState, discard *Tile) [][]*Tile {
 // Caller is expected to drive seat-by-seat (one action per seat, in turn
 // order starting at the seat immediately after the discarder). The
 // engine does not advance the turn until the window resolves.
+// DEPRECATED
 func (g *Game) ActionClaim(seat SeatIndex, action ClaimAction) error {
 	round := &g.State.Round
 	if round.Phase != PhaseClaim {
@@ -306,7 +381,7 @@ func (g *Game) resolveClaimWindow() error {
 	window.Winner = winner
 	window.Resolved = true
 	round.Claim = nil
-	round.Phase = PhasePlay
+	round.Phase = PhaseDiscard
 
 	if winner == nil {
 		// Everyone passed. The discarder does not get a draw, so the
@@ -730,4 +805,21 @@ func (g *Game) UpgradePongToKong(meldIndex int) error {
 	}
 	round.NewlyDrawnTile = tile
 	return nil
+}
+
+func (g *Game) GetPhaseHandlers(tileIDToDiscard TileID) map[RoundPhase]func() error {
+	return map[RoundPhase]func() error{
+		PhasePlay: func() error {
+			return g.DrawForCurrentPlayer()
+		},
+		PhaseDiscard: func() error {
+			return g.Discard(tileIDToDiscard)
+		},
+		PhaseClaim: func() error {
+			return g.ResolveClaim()
+		},
+		PhaseCheckWin: func() error {
+			return g.ResolveWin()
+		},
+	}
 }

@@ -6,7 +6,9 @@ const (
 	PhaseDealing RoundPhase = iota
 	PhasePlay
 	PhaseClaim
-	PhaseRoundEnd
+	PhaseDiscard
+	PhaseCheckWin
+	PhaseWin
 )
 
 type Round struct {
