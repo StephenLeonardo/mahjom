@@ -25,11 +25,43 @@ func TestGameDiscardThenDraw(t *testing.T) {
 	if game.State.Round.NewlyDrawnTile != nil {
 		t.Fatal("newly drawn tile remains after discard")
 	}
-	if game.State.Round.CurrentPlayer != SeatIndex(South) {
-		t.Fatalf("current player = %d, want South", game.State.Round.CurrentPlayer)
+	// Discard opens a ClaimWindow. East is the discarder and stays
+	// CurrentPlayer until the window resolves.
+	if game.State.Round.CurrentPlayer != SeatIndex(East) {
+		t.Fatalf("current player = %d, want East (discarder)", game.State.Round.CurrentPlayer)
+	}
+	if game.State.Round.Phase != PhaseClaim {
+		t.Fatalf("phase = %v, want PhaseClaim", game.State.Round.Phase)
+	}
+	if game.State.Round.Claim == nil || game.State.Round.Claim.FromSeat != SeatIndex(East) {
+		t.Fatal("claim window is not open from East")
+	}
+	if game.State.Round.Claim.PendingSeat != SeatIndex(South) {
+		t.Fatalf("pending seat = %d, want South", game.State.Round.Claim.PendingSeat)
 	}
 	if game.State.Wall.Remaining() != wallBeforeDiscard {
 		t.Fatal("discard changed the wall")
+	}
+
+	// Drive all four seats to pass. The discarder is excluded, so South,
+	// West, and North each get a turn in clockwise order.
+	for _, w := range []Wind{South, West, North} {
+		if err := game.ActionClaim(SeatIndex(w), ClaimAction{Type: ClaimPass}); err != nil {
+			t.Fatalf("seat %d pass: %v", w, err)
+		}
+	}
+
+	// After all four seats have passed, the turn advances to the seat
+	// after the discarder, and Phase is back to PhasePlay with no
+	// newly-drawn tile.
+	if game.State.Round.Phase != PhasePlay {
+		t.Fatalf("phase after all-pass = %v, want PhasePlay", game.State.Round.Phase)
+	}
+	if game.State.Round.Claim != nil {
+		t.Fatal("claim window still open after all-pass")
+	}
+	if game.State.Round.CurrentPlayer != SeatIndex(South) {
+		t.Fatalf("current player after all-pass = %d, want South", game.State.Round.CurrentPlayer)
 	}
 
 	if err := game.DrawForCurrentPlayer(); err != nil {

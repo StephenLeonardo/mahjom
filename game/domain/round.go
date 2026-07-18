@@ -22,7 +22,11 @@ type Round struct {
 }
 
 type ClaimWindow struct {
-	Discard     Tile
-	FromSeat    SeatIndex
-	PendingSeat SeatIndex
+	Discard      *Tile
+	FromSeat     SeatIndex
+	PendingSeat  SeatIndex
+	Acted        [4]bool // true once that seat has declared or passed
+	Declarations []*ClaimDecl
+	Resolved     bool
+	Winner       *ClaimDecl
 }

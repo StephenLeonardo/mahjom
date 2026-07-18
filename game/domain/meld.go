@@ -20,6 +20,6 @@ const (
 type Meld struct {
 	Type     MeldType
 	Kong     KongType
-	Tiles    []Tile
+	Tiles    []*Tile
 	FromSeat SeatIndex
 }
