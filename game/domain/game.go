@@ -36,7 +36,7 @@ func NewGame(id string, config *GameConfig, seed uint64) *Game {
 		State: &GameState{
 			Round: Round{
 				Phase:         PhaseDealing,
-				CurrentPlayer: SeatIndex(West),
+				CurrentPlayer: SeatIndex(East),
 				LastDiscardBy: SeatNone,
 			},
 			Players: [4]*PlayerState{

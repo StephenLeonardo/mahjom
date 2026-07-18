@@ -4,6 +4,7 @@ type RoundPhase uint8
 
 const (
 	PhaseDealing RoundPhase = iota
+	PhaseDraw
 	PhasePlay
 	PhaseClaim
 	PhaseDiscard
