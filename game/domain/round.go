@@ -18,7 +18,8 @@ type Round struct {
 	LastDiscard    *Tile
 	LastDiscardBy  SeatIndex
 
-	Claim *ClaimWindow
+	Claim   *ClaimWindow
+	ClaimV2 *ClaimWindowV2
 }
 
 type ClaimWindow struct {
@@ -29,4 +30,18 @@ type ClaimWindow struct {
 	Declarations []*ClaimDecl
 	Resolved     bool
 	Winner       *ClaimDecl
+}
+
+// prompt everyone at once, wait for responses, then resolve
+type ClaimWindowV2 struct {
+	Discard  *Tile
+	FromSeat SeatIndex
+
+	AllPossibleDeclarations [][]*ClaimDecl
+	Responded               [4]bool
+	Declarations            map[SeatIndex]*ClaimDecl
+	DeadlineUnix            int64
+
+	Resolved bool
+	Winner   *ClaimDecl
 }

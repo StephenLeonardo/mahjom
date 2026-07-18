@@ -1,6 +1,9 @@
 package domain
 
-import "errors"
+import (
+	"errors"
+	"time"
+)
 
 var (
 	ErrRoundNotInPlay = errors.New("round is not in play")
@@ -16,17 +19,17 @@ var (
 
 type Game struct {
 	ID     string
-	Config GameConfig
-	State  GameState
+	Config *GameConfig
+	State  *GameState
 }
 
 // NewGame creates and deals a new round using a deterministic shuffle seed.
-func NewGame(id string, config GameConfig, seed uint64) *Game {
+func NewGame(id string, config *GameConfig, seed uint64) *Game {
 	wallTiles := append([]*Tile(nil), Catalog...)
 	game := &Game{
 		ID:     id,
 		Config: config,
-		State: GameState{
+		State: &GameState{
 			Round: Round{
 				Phase:         PhaseDealing,
 				CurrentPlayer: SeatIndex(East),
@@ -52,7 +55,7 @@ func (g *Game) DrawForCurrentPlayer() error {
 		return ErrMustDiscard
 	}
 
-	tile, ok := g.State.drawHandTile(&g.State.Players[round.CurrentPlayer])
+	tile, ok := g.State.drawHandTile(g.State.Players[round.CurrentPlayer])
 	if !ok {
 		return ErrWallEmpty
 	}
@@ -105,9 +108,133 @@ func (g *Game) Discard(id TileID) error {
 		PendingSeat: nextSeatAfter(player),
 		Acted:       acted,
 	}
+	windowV2 := g.generateClaimWindowV2(round)
 	round.Claim = window
+	round.ClaimV2 = windowV2
 	round.Phase = PhaseClaim
 	return nil
+}
+
+func (g *Game) generateClaimWindowV2(round *Round) *ClaimWindowV2 {
+	claimWindowV2 := &ClaimWindowV2{
+		Discard:                 round.LastDiscard,
+		FromSeat:                round.LastDiscardBy,
+		AllPossibleDeclarations: g.getAllEligibleClaims(g.State, round),
+		DeadlineUnix:            time.Now().Add(5 * time.Second).Unix(),
+	}
+	return claimWindowV2
+}
+
+func (g *Game) getAllEligibleClaims(state *GameState, round *Round) [][]*ClaimDecl {
+
+	res := make([][]*ClaimDecl, 4)
+
+	lastDiscardBy := round.LastDiscardBy
+	lastDiscard := round.LastDiscard
+	for playerIndex := range state.Players {
+		if SeatIndex(playerIndex) == lastDiscardBy {
+			continue
+		}
+		currPlayerPossibleClaims := g.generateAllPossibleClaimsForPlayer(lastDiscardBy, SeatIndex(playerIndex), lastDiscard)
+		res[playerIndex] = currPlayerPossibleClaims
+	}
+
+	return res
+}
+
+func (g *Game) convertTilesToClaimDecl(claimantIndex SeatIndex, tiles []*Tile, meldType MeldType, kongType KongType) *ClaimDecl {
+	claimDecl := &ClaimDecl{
+		Claimant: claimantIndex,
+		Type:     meldType,
+		Kong:     kongType,
+		Tiles:    tiles,
+	}
+
+	return claimDecl
+}
+
+func (g *Game) generateAllPossibleClaimsForPlayer(discarder, playerIndex SeatIndex, discard *Tile) []*ClaimDecl {
+	player := g.State.Players[playerIndex]
+	res := []*ClaimDecl{}
+
+	for _, meldType := range []MeldType{MeldPong, MeldKong, MeldChow} {
+		switch meldType {
+		case MeldPong:
+			tiles := getMatchingInHand(player, discard)
+			if len(tiles) >= 3 {
+				res = append(res, g.convertTilesToClaimDecl(playerIndex, tiles[:3], MeldPong, KongNone))
+			}
+		case MeldKong:
+			tiles := getMatchingInHand(player, discard)
+			if len(tiles) >= 4 {
+				res = append(res, g.convertTilesToClaimDecl(playerIndex, tiles[:4], MeldKong, KongExposed))
+			}
+		case MeldChow:
+			// Chow is only valid on suited tiles (Wan/Bamboo/Dot).
+			if !discard.IsSuitedForChow() {
+				continue
+			}
+			// Chow is only valid from the seat immediately after the
+			// discarder. Other seats can Pong or Kong the same tile, but
+			// not Chow it.
+			if seatDistance(discarder, playerIndex) != 1 {
+				continue
+			}
+			chowTiles := getAllPossibleChowCombinations(player, discard)
+			for _, tiles := range chowTiles {
+				res = append(res, g.convertTilesToClaimDecl(playerIndex, tiles, MeldChow, KongNone))
+			}
+		}
+	}
+
+	return res
+}
+
+// getAllPossibleChowCombinations finds all possible 3-tile sequences (Chows) that can be
+// formed using an opponent's discard and two tiles from your hand.
+func getAllPossibleChowCombinations(p *PlayerState, discard *Tile) [][]*Tile {
+	if discard == nil {
+		return nil
+	}
+
+	var results [][]*Tile
+
+	// TODO: optimize
+	// Helper to find all tiles in hand matching a specific suit and rank
+	findTiles := func(suit Suit, rank uint8) *Tile {
+		for _, h := range p.Hand {
+			if h.Suit == suit && h.Rank == rank {
+				return h
+			}
+		}
+		return nil
+	}
+
+	// Sequences are (D-2, D-1, D), (D-1, D, D+1), or (D, D+1, D+2)
+	// We check every possibility.
+	// Case A: Discard is High (D-2, D-1, D)
+	if discard.Rank >= 3 {
+		t1, t2 := findTiles(discard.Suit, discard.Rank-2), findTiles(discard.Suit, discard.Rank-1)
+		if t1 != nil || t2 != nil {
+			results = append(results, []*Tile{t1, t2, discard})
+		}
+	}
+	// Case B: Discard is Middle (D-1, D, D+1)
+	if discard.Rank >= 2 && discard.Rank <= 8 {
+		t1, t3 := findTiles(discard.Suit, discard.Rank-1), findTiles(discard.Suit, discard.Rank+1)
+		if t1 != nil || t3 != nil {
+			results = append(results, []*Tile{t1, discard, t3})
+		}
+	}
+	// Case C: Discard is Low (D, D+1, D+2)
+	if discard.Rank <= 7 {
+		t2, t3 := findTiles(discard.Suit, discard.Rank+1), findTiles(discard.Suit, discard.Rank+2)
+		if t2 != nil || t3 != nil {
+			results = append(results, []*Tile{discard, t2, t3})
+		}
+	}
+
+	return results
 }
 
 // ActionClaim processes a ClaimAction from the seat whose turn it is in
@@ -145,7 +272,7 @@ func (g *Game) ActionClaim(seat SeatIndex, action ClaimAction) error {
 	}
 
 	// ClaimDeclare: validate and append.
-	player := &g.State.Players[seat]
+	player := g.State.Players[seat]
 	if err := validateClaim(seat, window.FromSeat, player, window.Discard, action.Meld, action.Kong); err != nil {
 		// Roll back the Acted flag so the seat can retry with a valid
 		// declaration? No — the caller asked to declare and failed
@@ -189,8 +316,8 @@ func (g *Game) resolveClaimWindow() error {
 	}
 
 	// Apply the winning claim.
-	claimant := &g.State.Players[winner.Claimant]
-	discarder := &g.State.Players[window.FromSeat]
+	claimant := g.State.Players[winner.Claimant]
+	discarder := g.State.Players[window.FromSeat]
 	meld := buildMeld(claimant, discarder, window.FromSeat, window.Discard, winner.Type, winner.Kong)
 	claimant.Melds = append(claimant.Melds, meld)
 	round.CurrentPlayer = winner.Claimant
@@ -270,7 +397,7 @@ func validateClaim(seat, discarder SeatIndex, p *PlayerState, discard *Tile, mel
 		}
 	case MeldChow:
 		// Chow is only valid on suited tiles (Wan/Bamboo/Dot).
-		if !isSuitedForChow(discard) {
+		if !discard.IsSuitedForChow() {
 			return ErrTileNotClaim
 		}
 		// Chow is only valid from the seat immediately after the
@@ -285,6 +412,16 @@ func validateClaim(seat, discarder SeatIndex, p *PlayerState, discard *Tile, mel
 		}
 	}
 	return nil
+}
+
+func getMatchingInHand(p *PlayerState, t *Tile) []*Tile {
+	res := []*Tile{t}
+	for _, h := range p.Hand {
+		if sameKind(h, t) {
+			res = append(res, h)
+		}
+	}
+	return res
 }
 
 func countMatchingInHand(p *PlayerState, t *Tile) int {
@@ -304,10 +441,6 @@ func sameKind(a, b *Tile) bool {
 		return false
 	}
 	return a.Suit == b.Suit && a.Rank == b.Rank
-}
-
-func isSuitedForChow(t *Tile) bool {
-	return t.Suit == SuitCharacter || t.Suit == SuitBamboo || t.Suit == SuitDot
 }
 
 // canCompleteChow checks whether the hand has tiles to complete a Chow
@@ -371,9 +504,10 @@ func chowHelper(p *PlayerState, discard *Tile, pos int) bool {
 		if h.Suit != discard.Suit {
 			continue
 		}
-		if h.Rank == otherA {
+		switch h.Rank {
+		case otherA:
 			haveA = true
-		} else if h.Rank == otherB {
+		case otherB:
 			haveB = true
 		}
 	}
@@ -467,7 +601,7 @@ func (g *Game) DeclareConcealedKong() error {
 		return ErrMustDraw
 	}
 
-	player := &g.State.Players[round.CurrentPlayer]
+	player := g.State.Players[round.CurrentPlayer]
 	drawn := round.NewlyDrawnTile
 	if drawn.IsBonus() {
 		return ErrMustDraw // can't Kong a bonus tile (it shouldn't be in hand anyway)
@@ -560,7 +694,7 @@ func (g *Game) UpgradePongToKong(meldIndex int) error {
 		return ErrMustDraw
 	}
 
-	player := &g.State.Players[round.CurrentPlayer]
+	player := g.State.Players[round.CurrentPlayer]
 	if meldIndex < 0 || meldIndex >= len(player.Melds) {
 		return ErrTileNotClaim
 	}

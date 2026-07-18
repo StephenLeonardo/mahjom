@@ -31,8 +31,8 @@ func claimTestHelper(t *testing.T, hands map[Wind][]*Tile, wallTiles []*Tile, ca
 	t.Helper()
 	g := &Game{
 		ID:     "claim-test",
-		Config: GameConfig{},
-		State: GameState{
+		Config: &GameConfig{},
+		State: &GameState{
 			Round: Round{
 				Phase:         PhasePlay,
 				CurrentPlayer: SeatIndex(caller),
@@ -510,7 +510,7 @@ func TestConcealedKongDoesNotReopenClaimWindow(t *testing.T) {
 	// should not be intercepted by a claim window.
 	g := &Game{
 		ID: "concealed-kong",
-		State: GameState{
+		State: &GameState{
 			Round: Round{
 				Phase:          PhasePlay,
 				CurrentPlayer:  SeatIndex(East),
@@ -563,7 +563,7 @@ func TestConcealedKongChainsAcrossSuccessiveDraws(t *testing.T) {
 	// does not complete a Kong.
 	g := &Game{
 		ID: "kong-chain",
-		State: GameState{
+		State: &GameState{
 			Round: Round{
 				Phase:          PhasePlay,
 				CurrentPlayer:  SeatIndex(East),
@@ -622,7 +622,7 @@ func TestPongUpgradeToKongOnSelfDrawnFourthTile(t *testing.T) {
 	// 5-Wan. East upgrades the Pong to a Kong and draws a replacement.
 	g := &Game{
 		ID: "pong-upgrade",
-		State: GameState{
+		State: &GameState{
 			Round: Round{
 				Phase:          PhasePlay,
 				CurrentPlayer:  SeatIndex(East),
@@ -673,7 +673,7 @@ func TestPongUpgradeToKongOnSelfDrawnFourthTile(t *testing.T) {
 func TestPongUpgradeRejectsMismatchedDrawnTile(t *testing.T) {
 	g := &Game{
 		ID: "pong-upgrade-mismatch",
-		State: GameState{
+		State: &GameState{
 			Round: Round{
 				Phase:          PhasePlay,
 				CurrentPlayer:  SeatIndex(East),

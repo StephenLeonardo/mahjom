@@ -6,7 +6,7 @@ import (
 )
 
 func TestGameDiscardThenDraw(t *testing.T) {
-	game := NewGame("turn-flow", GameConfig{}, 42)
+	game := NewGame("turn-flow", &GameConfig{}, 42)
 	eastTile := game.State.Players[East].Hand[0]
 	wallBeforeDiscard := game.State.Wall.Remaining()
 
@@ -67,7 +67,7 @@ func TestGameDiscardThenDraw(t *testing.T) {
 	if err := game.DrawForCurrentPlayer(); err != nil {
 		t.Fatalf("South draw: %v", err)
 	}
-	south := &game.State.Players[South]
+	south := game.State.Players[South]
 	if len(south.Hand) != 14 {
 		t.Fatalf("South hand size = %d, want 14", len(south.Hand))
 	}
@@ -83,7 +83,7 @@ func TestGameDiscardThenDraw(t *testing.T) {
 }
 
 func TestGameTurnValidation(t *testing.T) {
-	game := NewGame("turn-validation", GameConfig{}, 99)
+	game := NewGame("turn-validation", &GameConfig{}, 99)
 
 	if err := game.DrawForCurrentPlayer(); !errors.Is(err, ErrMustDiscard) {
 		t.Fatalf("East draw before discard = %v, want %v", err, ErrMustDiscard)
@@ -97,7 +97,7 @@ func TestGameDrawReplacesBonusTiles(t *testing.T) {
 	flower := &Tile{ID: 136, Suit: SuitFlower, Rank: 0}
 	animal := &Tile{ID: 144, Suit: SuitAnimal, Rank: 0}
 	normal := &Tile{ID: 0, Suit: SuitCharacter, Rank: 1}
-	game := &Game{State: GameState{
+	game := &Game{State: &GameState{
 		Round: Round{Phase: PhasePlay, CurrentPlayer: SeatIndex(East)},
 		Wall:  Wall{DrawPile: []*Tile{flower, animal, normal}},
 	}}
@@ -105,7 +105,7 @@ func TestGameDrawReplacesBonusTiles(t *testing.T) {
 	if err := game.DrawForCurrentPlayer(); err != nil {
 		t.Fatalf("draw with bonus replacements: %v", err)
 	}
-	player := &game.State.Players[East]
+	player := game.State.Players[East]
 	if len(player.Hand) != 1 || player.Hand[0] != normal {
 		t.Fatal("normal replacement tile was not added to hand")
 	}

@@ -7,7 +7,7 @@ import (
 )
 
 func main() {
-	game := domain.NewGame("demo", domain.GameConfig{}, uint64(time.Now().Unix()))
+	game := domain.NewGame("demo", &domain.GameConfig{}, uint64(time.Now().Unix()))
 
 	fmt.Println("-------------------------")
 	fmt.Println("East Player")

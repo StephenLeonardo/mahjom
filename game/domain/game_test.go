@@ -3,7 +3,7 @@ package domain
 import "testing"
 
 func TestNewGameDealsIndependentWall(t *testing.T) {
-	game := NewGame("test-game", GameConfig{}, 42)
+	game := NewGame("test-game", &GameConfig{}, 42)
 
 	if game.State.Round.Phase != PhasePlay {
 		t.Fatalf("round phase = %v, want %v", game.State.Round.Phase, PhasePlay)

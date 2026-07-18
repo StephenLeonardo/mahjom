@@ -7,20 +7,20 @@ type IGameState interface {
 type GameState struct {
 	Round   Round
 	Wall    Wall
-	Players [4]PlayerState
+	Players [4]*PlayerState
 }
 
 func (g *GameState) DealInitialHands() {
 	for playerIndex := range g.Players {
 		for range 13 {
-			_, ok := g.drawHandTile(&g.Players[playerIndex])
+			_, ok := g.drawHandTile(g.Players[playerIndex])
 			if !ok {
 				return
 			}
 		}
 	}
 
-	dealerTile, ok := g.drawHandTile(&g.Players[East])
+	dealerTile, ok := g.drawHandTile(g.Players[East])
 	if !ok {
 		return
 	}
