@@ -10,6 +10,15 @@ type GameState struct {
 	Players [4]*PlayerState
 }
 
+func (g *GameState) IsGameEnd() bool {
+	return g.Wall.Remaining() == 0
+}
+
+func (g *GameState) GetCurrentPlayerState() *PlayerState {
+	currSeat := g.Round.CurrentPlayer
+	return g.Players[currSeat]
+}
+
 func (g *GameState) DealInitialHands() {
 	for playerIndex := range g.Players {
 		for range 13 {

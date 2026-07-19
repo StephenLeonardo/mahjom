@@ -7,12 +7,9 @@ var (
 )
 
 type IStateActionables interface {
-	Draw() error
-	Discard() error
-	Claim() error
-	CheckWin() error
-	Win() error
 	GetStateName() string
+
+	Resolve() error
 }
 
 type defaultState struct{}

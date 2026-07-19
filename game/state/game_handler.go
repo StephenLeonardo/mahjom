@@ -37,6 +37,9 @@ func NewGameHandler(id string, config *domain.GameConfig, seed uint64) *GameHand
 			},
 			Players: [4]*domain.PlayerState{
 				{
+					ID: "0",
+				},
+				{
 					ID: "1",
 				},
 				{
@@ -45,28 +48,25 @@ func NewGameHandler(id string, config *domain.GameConfig, seed uint64) *GameHand
 				{
 					ID: "3",
 				},
-				{
-					ID: "4",
-				},
 			},
 			Wall: domain.Wall{DrawPile: wallTiles},
 		},
 	}
 
 	handler.drawState = &DrawState{
-		gameHandler: handler,
+		game: handler,
 	}
 	handler.discardState = &DiscardState{
-		gameHandler: handler,
+		game: handler,
 	}
 	handler.claimState = &ClaimState{
-		gameHandler: handler,
+		game: handler,
 	}
 	handler.checkWinState = &CheckWinState{
-		gameHandler: handler,
+		game: handler,
 	}
 	handler.winState = &WinState{
-		gameHandler: handler,
+		game: handler,
 	}
 
 	handler.State.Wall.Shuffle(seed)
@@ -77,11 +77,26 @@ func NewGameHandler(id string, config *domain.GameConfig, seed uint64) *GameHand
 func Play() {
 	g := NewGameHandler("gameID", &domain.GameConfig{}, uint64(time.Now().Unix()))
 
-	roundJson, err := json.MarshalIndent(g.State.Round, "", "  ")
-	if err != nil {
-		fmt.Println("Error marshaling Round to JSON:", err)
-	} else {
-		fmt.Println(string(roundJson))
+	roundJson, _ := json.MarshalIndent(g.State.Round, "", "  ")
+	fmt.Println(string(roundJson))
+
+	fmt.Println()
+	fmt.Println("------------------------------")
+	fmt.Println()
+
+	playersJson, _ := json.MarshalIndent(g.State.Players, "", "  ")
+	fmt.Println(string(playersJson))
+
+	for !g.State.IsGameEnd() {
+		if err := g.currState.Resolve(); err != nil {
+			fmt.Println("Error: ", err)
+		}
 	}
 
+	fmt.Println()
+	fmt.Println("==============================")
+	fmt.Println()
+	fmt.Println("GG")
+	playersJson, _ = json.MarshalIndent(g.State.Players, "", "  ")
+	fmt.Println(string(playersJson))
 }
