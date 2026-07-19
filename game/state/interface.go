@@ -12,6 +12,7 @@ type IStateActionables interface {
 	Claim() error
 	CheckWin() error
 	Win() error
+	GetStateName() string
 }
 
 type defaultState struct{}
@@ -34,4 +35,8 @@ func (s *defaultState) CheckWin() error {
 
 func (s *defaultState) Win() error {
 	return ErrActionNotAllowed
+}
+
+func (s *defaultState) GetStateName() string {
+	return "default state"
 }

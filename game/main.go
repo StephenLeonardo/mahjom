@@ -4,12 +4,17 @@ import (
 	"encoding/json"
 	"fmt"
 	"mahjom/game/domain"
+	"mahjom/game/state"
 	"sort"
 	"sync"
 	"time"
 )
 
 func main() {
+	// v2
+	state.Play()
+	return
+
 	game := domain.NewGame("demo", &domain.GameConfig{}, uint64(time.Now().Unix()))
 
 	fmt.Println("-------------------------")

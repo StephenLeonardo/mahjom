@@ -1,8 +1,11 @@
 package state
 
 import (
+	"encoding/json"
+	"fmt"
 	"mahjom/game/domain"
 	"mahjom/game/domain/constants"
+	"time"
 )
 
 type GameHandler struct {
@@ -11,13 +14,13 @@ type GameHandler struct {
 	State  *domain.GameState
 	// Players [4]*domain.PlayerState
 
-	currState *IStateActionables
+	currState IStateActionables
 
-	drawState     *IStateActionables
-	discardState  *IStateActionables
-	claimState    *IStateActionables
-	checkWinState *IStateActionables
-	winState      *IStateActionables
+	drawState     IStateActionables
+	discardState  IStateActionables
+	claimState    IStateActionables
+	checkWinState IStateActionables
+	winState      IStateActionables
 }
 
 func NewGameHandler(id string, config *domain.GameConfig, seed uint64) *GameHandler {
@@ -50,7 +53,35 @@ func NewGameHandler(id string, config *domain.GameConfig, seed uint64) *GameHand
 		},
 	}
 
+	handler.drawState = &DrawState{
+		gameHandler: handler,
+	}
+	handler.discardState = &DiscardState{
+		gameHandler: handler,
+	}
+	handler.claimState = &ClaimState{
+		gameHandler: handler,
+	}
+	handler.checkWinState = &CheckWinState{
+		gameHandler: handler,
+	}
+	handler.winState = &WinState{
+		gameHandler: handler,
+	}
+
 	handler.State.Wall.Shuffle(seed)
 	handler.State.DealInitialHands()
 	return handler
+}
+
+func Play() {
+	g := NewGameHandler("gameID", &domain.GameConfig{}, uint64(time.Now().Unix()))
+
+	roundJson, err := json.MarshalIndent(g.State.Round, "", "  ")
+	if err != nil {
+		fmt.Println("Error marshaling Round to JSON:", err)
+	} else {
+		fmt.Println(string(roundJson))
+	}
+
 }
