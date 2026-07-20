@@ -71,32 +71,41 @@ func NewGameHandler(id string, config *domain.GameConfig, seed uint64) *GameHand
 
 	handler.State.Wall.Shuffle(seed)
 	handler.State.DealInitialHands()
+	handler.currState = handler.checkWinState
 	return handler
 }
 
 func Play() {
-	g := NewGameHandler("gameID", &domain.GameConfig{}, uint64(time.Now().Unix()))
 
-	roundJson, _ := json.MarshalIndent(g.State.Round, "", "  ")
-	fmt.Println(string(roundJson))
+	for range 1000 {
+		g := NewGameHandler("gameID", &domain.GameConfig{}, uint64(time.Now().Unix()))
 
-	fmt.Println()
-	fmt.Println("------------------------------")
-	fmt.Println()
+		// roundJson, _ := json.MarshalIndent(g.State.Round, "", "  ")
+		// fmt.Println(string(roundJson))
 
-	playersJson, _ := json.MarshalIndent(g.State.Players, "", "  ")
-	fmt.Println(string(playersJson))
+		// fmt.Println()
+		// fmt.Println("------------------------------")
+		// fmt.Println()
 
-	for !g.State.IsGameEnd() {
-		if err := g.currState.Resolve(); err != nil {
-			fmt.Println("Error: ", err)
+		// playersJson, _ := json.MarshalIndent(g.State.Players, "", "  ")
+		// fmt.Println(string(playersJson))
+
+		for !g.State.IsGameEnd() {
+			if err := g.currState.Resolve(); err != nil {
+				fmt.Println("Error: ", err)
+			}
+		}
+
+		fmt.Println()
+		fmt.Println("==============================")
+		fmt.Println()
+		fmt.Println("GG")
+		playersJson, _ := json.MarshalIndent(g.State.Players, "", "  ")
+		fmt.Println(string(playersJson))
+		fmt.Println("MAHJONG")
+		fmt.Println("isWin: ", g.State.IsWin)
+		if g.State.IsWin {
+			break
 		}
 	}
-
-	fmt.Println()
-	fmt.Println("==============================")
-	fmt.Println()
-	fmt.Println("GG")
-	playersJson, _ = json.MarshalIndent(g.State.Players, "", "  ")
-	fmt.Println(string(playersJson))
 }

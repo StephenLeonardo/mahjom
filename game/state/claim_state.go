@@ -23,21 +23,69 @@ func (s *ClaimState) Resolve() error {
 	// generate all possible claims from all players
 	playersPossibleClaims := s.getAllEligibleClaims()
 
-	var selectedClaimsPerPlayer [4]*domain.ClaimDecl
+	selectedClaimsPerPlayer := make([]*domain.ClaimDecl, 0, 4)
 
 	// TODO: prompt to user to select their eligible claims
-	for i, playerClaims := range playersPossibleClaims {
+	for _, playerClaims := range playersPossibleClaims {
+		if len(playerClaims) == 0 {
+			continue
+		}
+
 		// TODO: add some rng to simulate a pass action
 		if len(playerClaims) == 1 {
-			selectedClaimsPerPlayer[i] = playerClaims[0]
+			selectedClaimsPerPlayer = append(selectedClaimsPerPlayer, playerClaims[0])
 			continue
 		}
 
 		// TODO: prompt user with goroutine
-		selectedClaimsPerPlayer[i] = playerClaims[0]
+		selectedClaimsPerPlayer = append(selectedClaimsPerPlayer, playerClaims[0])
 	}
 
+	winningClaim := s.getWinningClaim(selectedClaimsPerPlayer)
+	round := s.game.State.Round
+
+	if winningClaim == nil {
+		s.game.currState = s.game.drawState
+		round.CurrentPlayer = round.GetNextSeatAfter(round.CurrentPlayer)
+		return nil
+	}
+
+	round.LastDiscard = nil
+	round.LastDiscardBy = domain.SeatNone
+	round.CurrentPlayer = winningClaim.Claimant
+
+	player := s.game.State.Players[winningClaim.Claimant]
+	player.AddToMelds(winningClaim)
+	for _, t := range winningClaim.Tiles {
+		player.RemoveFromHand(t.ID)
+	}
+
+	if winningClaim.ClaimType == domain.ClaimHu {
+		s.game.currState = s.game.checkWinState
+		return nil
+	}
+
+	s.game.currState = s.game.discardState
 	return nil
+}
+
+func (s *ClaimState) getWinningClaim(claims []*domain.ClaimDecl) *domain.ClaimDecl {
+	if len(claims) == 0 {
+		return nil
+	}
+	discarder := int(claims[0].Discarder)
+	n := 4
+	sort.Slice(claims, func(i, j int) bool {
+		if claims[i].ClaimType == claims[j].ClaimType {
+			rankI := (int(claims[i].Claimant) - discarder + n) % n
+			rankJ := (int(claims[j].Claimant) - discarder + n) % n
+			return rankI < rankJ
+		}
+
+		return claims[i].ClaimType < claims[j].ClaimType
+	})
+
+	return claims[0]
 }
 
 func (s *ClaimState) getAllEligibleClaims() [][]*domain.ClaimDecl {
@@ -63,41 +111,75 @@ func (s *ClaimState) getAllEligibleClaims() [][]*domain.ClaimDecl {
 
 func (s *ClaimState) generateAllPossibleClaimsForPlayer(discarder, claimant domain.SeatIndex, discarded *domain.Tile) []*domain.ClaimDecl {
 	player := s.game.State.Players[claimant]
-	res := []*domain.ClaimDecl{}
+	res := make([]*domain.ClaimDecl, 0, 8)
 
-	for _, meldType := range []domain.MeldType{domain.MeldPong, domain.MeldKong, domain.MeldChow} {
-		switch meldType {
-		case domain.MeldPong:
-			tiles := player.GetMatchingInHand(discarded)
-			if len(tiles) >= 3 {
-				res = append(res, s.generateClaimDecl(discarder, claimant, tiles[:3], domain.MeldPong, domain.KongNone))
-			}
-		case domain.MeldKong:
-			tiles := player.GetMatchingInHand(discarded)
-			if len(tiles) >= 4 {
-				res = append(res, s.generateClaimDecl(discarder, claimant, tiles[:4], domain.MeldKong, domain.KongExposed))
-			}
-		case domain.MeldChow:
-			// Chow is only valid on suited tiles (Wan/Bamboo/Dot).
-			if !discarded.IsSuitedForChow() {
+	matching := player.GetMatchingInHand(discarded)
+	chows := s.claimChows(discarder, claimant, discarded, false)
+
+	hasPong := len(matching) >= 3
+	hasKong := len(matching) >= 4
+	hasChow := len(chows) > 0
+
+	for _, claimType := range domain.ClaimPriority {
+		switch claimType {
+		case domain.ClaimHu:
+			// only allow if discarded tile makes a Hu
+			player.AddTile(discarded)
+			if !domain.IsSimpleWinningHand(player) {
+				player.RemoveFromHand(discarded.ID)
 				continue
 			}
-			// Chow is only valid from the seat immediately after the
-			// discarder. Other seats can Pong or Kong the same tile, but
-			// not Chow it.
-			if utils.SeatDistance(discarder, claimant) != 1 {
-				continue
+			player.RemoveFromHand(discarded.ID)
+
+			if hasPong {
+				res = append(res, s.generateClaimDecl(discarder, claimant, matching[:3], claimType, domain.MeldPong, domain.KongNone))
 			}
-			chowTiles := s.getAllPossibleChowCombinations(player, discarded)
-			for _, tiles := range chowTiles {
-				res = append(res, s.generateClaimDecl(discarder, claimant, tiles, domain.MeldChow, domain.KongNone))
+			if hasKong {
+				res = append(res, s.generateClaimDecl(discarder, claimant, matching[:4], claimType, domain.MeldKong, domain.KongExposed))
+			}
+			if hasChow {
+				res = append(res, chows...)
+			}
+		case domain.ClaimPong:
+			if hasPong {
+				res = append(res, s.generateClaimDecl(discarder, claimant, matching[:3], claimType, domain.MeldPong, domain.KongNone))
+			}
+		case domain.ClaimKong:
+			if hasKong {
+				res = append(res, s.generateClaimDecl(discarder, claimant, matching[:4], claimType, domain.MeldKong, domain.KongExposed))
+			}
+		case domain.ClaimChow:
+			if hasChow {
+				res = append(res, chows...)
 			}
 		}
 	}
 
-	sort.Slice(res, func(i, j int) bool {
-		return res[i].Type > res[j].Type
-	})
+	return res
+}
+
+func (s *ClaimState) claimChows(discarder, claimant domain.SeatIndex, discarded *domain.Tile, isHu bool) []*domain.ClaimDecl {
+	var res []*domain.ClaimDecl
+	// Chow is only valid on suited tiles (Wan/Bamboo/Dot).
+	if !discarded.IsSuitedForChow() {
+		return res
+	}
+	// Chow is only valid from the seat immediately after the
+	// discarder if not Hu. Other seats can Pong or Kong the same tile, but
+	// not Chow it.
+	if !isHu && utils.SeatDistance(discarder, claimant) != 1 {
+		return res
+	}
+
+	claimType := domain.ClaimChow
+	if isHu {
+		claimType = domain.ClaimHu
+	}
+	player := s.game.State.Players[claimant]
+	chowTiles := s.getAllPossibleChowCombinations(player, discarded)
+	for _, tiles := range chowTiles {
+		res = append(res, s.generateClaimDecl(discarder, claimant, tiles, claimType, domain.MeldChow, domain.KongNone))
+	}
 
 	return res
 }
@@ -106,12 +188,14 @@ func (s *ClaimState) generateClaimDecl(
 	discarder,
 	claimantIndex domain.SeatIndex,
 	tiles []*domain.Tile,
+	claimType domain.ClaimType,
 	meldType domain.MeldType,
 	kongType domain.KongType,
 ) *domain.ClaimDecl {
 	claimDecl := &domain.ClaimDecl{
 		Discarder: discarder,
 		Claimant:  claimantIndex,
+		ClaimType: claimType,
 		Type:      meldType,
 		Kong:      kongType,
 		Tiles:     tiles,

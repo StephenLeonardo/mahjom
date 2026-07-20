@@ -48,3 +48,7 @@ type ClaimWindowV2 struct {
 	Resolved bool
 	Winner   *ClaimDecl
 }
+
+func (r *Round) GetNextSeatAfter(seat SeatIndex) SeatIndex {
+	return SeatIndex((int(seat) + 1) % 4)
+}

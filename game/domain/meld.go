@@ -8,6 +8,12 @@ const (
 	MeldKong
 )
 
+var MeldTypes = []MeldType{
+	MeldKong,
+	MeldPong,
+	MeldChow,
+}
+
 type KongType uint8
 
 const (

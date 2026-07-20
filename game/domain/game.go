@@ -10,6 +10,7 @@ import (
 var (
 	ErrRoundNotInPlay    = errors.New("round is not in play")
 	ErrRoundNotInDiscard = errors.New("round is not in discard")
+	ErrNotInWin          = errors.New("round is not in win")
 	ErrMustDraw          = errors.New("player must draw before discarding")
 	ErrMustDiscard       = errors.New("player must discard before drawing")
 	ErrTileNotInHand     = errors.New("tile is not in the player's hand")

@@ -8,10 +8,11 @@ type GameState struct {
 	Round   Round
 	Wall    Wall
 	Players [4]*PlayerState
+	IsWin   bool
 }
 
 func (g *GameState) IsGameEnd() bool {
-	return g.Wall.Remaining() == 0
+	return g.Wall.Remaining() == 0 || g.IsWin
 }
 
 func (g *GameState) GetCurrentPlayerState() *PlayerState {
