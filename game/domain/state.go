@@ -1,12 +1,18 @@
 package domain
 
+import (
+	"encoding/json"
+	"fmt"
+	"strings"
+)
+
 type IGameState interface {
 	DealInitialHands()
 }
 
 type GameState struct {
-	Round   Round
-	Wall    Wall
+	Round   *Round
+	Wall    *Wall
 	Players [4]*PlayerState
 	IsWin   bool
 }
@@ -63,10 +69,45 @@ func (g *GameState) drawHandTile(player *PlayerState) (*Tile, bool) {
 func (g *GameState) PrintPlayersHand() {
 	fmt.Println()
 	fmt.Println("---------------------------------------------")
-	for _, player := g.Players {
-		playerJson, _ := json.MarshalIndent(player, "", "  ")
-		fmt.Println(string(playerJson))
+	for _, player := range g.Players {
+		playerCopy := &PlayerState{}
+		deepCopyJSON(player, playerCopy)
+		playerCopy.SortHand()
+		// playerJson, _ := json.MarshalIndent(playerCopy, "", "  ")
+		// fmt.Println(string(playerJson))
+		tilesStr := []string{}
+		for _, tile := range playerCopy.Hand {
+			tilesStr = append(tilesStr, tile.Describe())
+		}
+		meldsStr := []string{}
+		for _, melds := range playerCopy.Melds {
+			for _, tile := range melds.Tiles {
+				meldsStr = append(meldsStr, tile.Describe())
+			}
+		}
+		animalsStr := []string{}
+		for _, tile := range playerCopy.Animals {
+			animalsStr = append(animalsStr, tile.Describe())
+		}
+		flowersStr := []string{}
+		for _, tile := range playerCopy.Flowers {
+			flowersStr = append(flowersStr, tile.Describe())
+		}
+		fmt.Println()
+		fmt.Printf("Player %s\n", playerCopy.ID)
+		fmt.Printf("Hand: %s\n", strings.Join(tilesStr, ", "))
+		fmt.Printf("Melds: %s\n", strings.Join(meldsStr, ", "))
+		fmt.Printf("Animals: %s\n", strings.Join(animalsStr, ", "))
+		fmt.Printf("Flowers: %s\n", strings.Join(flowersStr, ", "))
 	}
 	fmt.Println("---------------------------------------------")
 	fmt.Println()
+}
+
+func deepCopyJSON(src interface{}, dst interface{}) error {
+	bytes, err := json.Marshal(src)
+	if err != nil {
+		return err
+	}
+	return json.Unmarshal(bytes, dst)
 }

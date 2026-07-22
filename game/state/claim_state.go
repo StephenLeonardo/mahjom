@@ -1,6 +1,7 @@
 package state
 
 import (
+	"fmt"
 	"mahjom/game/domain"
 	"mahjom/game/utils"
 	"sort"
@@ -53,6 +54,7 @@ func (s *ClaimState) Resolve() error {
 	round.LastDiscard = nil
 	round.LastDiscardBy = domain.SeatNone
 	round.CurrentPlayer = winningClaim.Claimant
+	fmt.Println("New Claimant: ", winningClaim.Claimant)
 
 	player := s.game.State.Players[winningClaim.Claimant]
 	player.AddToMelds(winningClaim)

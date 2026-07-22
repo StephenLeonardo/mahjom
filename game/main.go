@@ -7,5 +7,4 @@ import (
 func main() {
 	// v2
 	state.Play()
-	return
 }

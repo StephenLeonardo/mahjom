@@ -20,7 +20,7 @@ func (s *DiscardState) Resolve() error {
 		return domain.ErrRoundNotInDiscard
 	}
 
-	round := &s.game.State.Round
+	round := s.game.State.Round
 
 	// TODO: prompt user which tile to discard
 	player := s.game.State.GetCurrentPlayerState()
@@ -36,6 +36,8 @@ func (s *DiscardState) Resolve() error {
 	}
 
 	player.AddToDiscard(tile)
+
+	// fmt.Printf("Player %s Discarded %s\n", player.ID, tile.Describe())
 
 	round.LastDiscard = tile
 	round.LastDiscardBy = s.game.State.Round.CurrentPlayer

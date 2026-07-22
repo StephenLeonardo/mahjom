@@ -31,7 +31,7 @@ func (s *DrawState) drawHandTile(player *domain.PlayerState) (*domain.Tile, bool
 }
 
 func (s *DrawState) Resolve() error {
-	round := &s.game.State.Round
+	round := s.game.State.Round
 	if s.game.currState.GetStateName() != s.GetStateName() {
 		return domain.ErrRoundNotInPlay
 	}

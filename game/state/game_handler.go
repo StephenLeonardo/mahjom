@@ -29,7 +29,7 @@ func NewGameHandler(id string, config *domain.GameConfig, seed uint64) *GameHand
 		ID:     id,
 		Config: config,
 		State: &domain.GameState{
-			Round: domain.Round{
+			Round: &domain.Round{
 				Number:        0,
 				Phase:         domain.PhaseCheckWin,
 				CurrentPlayer: domain.SeatIndex(domain.East),
@@ -49,7 +49,7 @@ func NewGameHandler(id string, config *domain.GameConfig, seed uint64) *GameHand
 					ID: "3",
 				},
 			},
-			Wall: domain.Wall{DrawPile: wallTiles},
+			Wall: &domain.Wall{DrawPile: wallTiles},
 		},
 	}
 
@@ -80,22 +80,14 @@ func Play() {
 	for range 1000 {
 		g := NewGameHandler("gameID", &domain.GameConfig{}, uint64(time.Now().Unix()))
 
-		// roundJson, _ := json.MarshalIndent(g.State.Round, "", "  ")
-		// fmt.Println(string(roundJson))
-
-		// fmt.Println()
-		// fmt.Println("------------------------------")
-		// fmt.Println()
-
-		// playersJson, _ := json.MarshalIndent(g.State.Players, "", "  ")
-		// fmt.Println(string(playersJson))
-
 		for !g.State.IsGameEnd() {
+			// fmt.Printf("After resolving %s\n", g.currState.GetStateName())
+			// fmt.Printf("Player %s's turn\n", g.State.GetCurrentPlayerState().ID)
 			if err := g.currState.Resolve(); err != nil {
 				fmt.Println("Error: ", err)
 			}
-			g.State.PrintPlayersHand()
-			fmt.Scanln()
+			// g.State.PrintPlayersHand()
+			// fmt.Scanln()
 		}
 
 		fmt.Println()
