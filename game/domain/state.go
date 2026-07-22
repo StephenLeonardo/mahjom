@@ -59,3 +59,14 @@ func (g *GameState) drawHandTile(player *PlayerState) (*Tile, bool) {
 		}
 	}
 }
+
+func (g *GameState) PrintPlayersHand() {
+	fmt.Println()
+	fmt.Println("---------------------------------------------")
+	for _, player := g.Players {
+		playerJson, _ := json.MarshalIndent(player, "", "  ")
+		fmt.Println(string(playerJson))
+	}
+	fmt.Println("---------------------------------------------")
+	fmt.Println()
+}

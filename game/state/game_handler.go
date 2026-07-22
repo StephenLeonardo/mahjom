@@ -94,6 +94,8 @@ func Play() {
 			if err := g.currState.Resolve(); err != nil {
 				fmt.Println("Error: ", err)
 			}
+			g.State.PrintPlayersHand()
+			fmt.Scanln()
 		}
 
 		fmt.Println()
