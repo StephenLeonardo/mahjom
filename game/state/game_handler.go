@@ -79,7 +79,7 @@ func Play() {
 
 	for range 1000 {
 		seed := uint64(time.Now().Unix())
-		g := NewGameHandler("gameID", &domain.GameConfig{}, uint64(time.Now().Unix()))
+		g := NewGameHandler("gameID", &domain.GameConfig{}, seed)
 
 		for !g.State.IsGameEnd() {
 			// fmt.Printf("After resolving %s\n", g.currState.GetStateName())

@@ -20,6 +20,7 @@ var (
 )
 
 type Game struct {
+	Seed   int
 	ID     string
 	Config *GameConfig
 	State  *GameState
