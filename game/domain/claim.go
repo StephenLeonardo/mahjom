@@ -1,5 +1,21 @@
 package domain
 
+type ClaimType uint8
+
+const (
+	ClaimHu ClaimType = iota
+	ClaimKong
+	ClaimPong
+	ClaimChow
+)
+
+var ClaimPriority = []ClaimType{
+	ClaimHu,
+	ClaimKong,
+	ClaimPong,
+	ClaimChow,
+}
+
 // ClaimDecl is one player's declaration in an open ClaimWindow.
 //
 // The Meld is not yet built at declaration time; it is constructed only if
@@ -8,6 +24,7 @@ package domain
 type ClaimDecl struct {
 	Discarder SeatIndex
 	Claimant  SeatIndex
+	ClaimType ClaimType
 	Type      MeldType // MeldPong, MeldKong, or MeldChow
 	Kong      KongType // only meaningful when Type == MeldKong (KongExposed)
 	Tile      *Tile    //  Deprecated

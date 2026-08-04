@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"math/rand/v2"
 	"slices"
 	"sort"
 )
@@ -92,4 +93,39 @@ func (p *PlayerState) AddToMelds(claimDecl *ClaimDecl) {
 		Tiles:    claimDecl.Tiles,
 		FromSeat: claimDecl.Discarder,
 	})
+}
+
+// DiscardRandomTileFromHand selects a random tile from the player's hand,
+// removes it, and returns the discarded tile.
+func (p *PlayerState) DiscardRandomTileFromHand(seed uint64) *Tile {
+	if len(p.Hand) == 0 {
+		return nil
+	}
+
+	r := rand.New(rand.NewPCG(seed, 0))
+	index := r.IntN(len(p.Hand))
+	discardedTile := p.Hand[index]
+
+	p.Hand[index] = p.Hand[len(p.Hand)-1]
+	p.Hand = p.Hand[:len(p.Hand)-1]
+
+	return discardedTile
+}
+
+func (p *PlayerState) AddToDiscard(tile *Tile) {
+	if tile == nil {
+		return
+	}
+
+	p.Discards = append(p.Discards, tile)
+}
+
+func (p *PlayerState) GetMatchingInHand(t *Tile) []*Tile {
+	res := []*Tile{t}
+	for _, h := range p.Hand {
+		if h.Suit == t.Suit && h.Rank == t.Rank {
+			res = append(res, h)
+		}
+	}
+	return res
 }
