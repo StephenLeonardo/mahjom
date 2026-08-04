@@ -78,6 +78,7 @@ func NewGameHandler(id string, config *domain.GameConfig, seed uint64) *GameHand
 func Play() {
 
 	for range 1000 {
+		seed := uint64(time.Now().Unix())
 		g := NewGameHandler("gameID", &domain.GameConfig{}, uint64(time.Now().Unix()))
 
 		for !g.State.IsGameEnd() {
@@ -98,6 +99,7 @@ func Play() {
 		fmt.Println(string(playersJson))
 		fmt.Println("MAHJONG")
 		fmt.Println("isWin: ", g.State.IsWin)
+		fmt.Println("Seed: ", seed)
 		if g.State.IsWin {
 			break
 		}
