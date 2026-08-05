@@ -3,13 +3,16 @@ package state
 import (
 	"encoding/json"
 	"fmt"
+	"mahjom/game/dataset"
 	"mahjom/game/domain"
 	"mahjom/game/domain/constants"
+	"strings"
 	"time"
 )
 
 type GameHandler struct {
 	ID     string
+	Seed   int
 	Config *domain.GameConfig
 	State  *domain.GameState
 	// Players [4]*domain.PlayerState
@@ -27,6 +30,7 @@ func NewGameHandler(id string, config *domain.GameConfig, seed uint64) *GameHand
 	wallTiles := append([]*domain.Tile(nil), constants.Catalog...)
 	handler := &GameHandler{
 		ID:     id,
+		Seed:   int(seed),
 		Config: config,
 		State: &domain.GameState{
 			Round: &domain.Round{
@@ -89,19 +93,58 @@ func Play() {
 			}
 			// g.State.PrintPlayersHand()
 			// fmt.Scanln()
+
+			fmt.Println(ToTrainingSampleString(g))
 		}
 
-		fmt.Println()
-		fmt.Println("==============================")
-		fmt.Println()
-		fmt.Println("GG")
-		playersJson, _ := json.MarshalIndent(g.State.Players, "", "  ")
-		fmt.Println(string(playersJson))
-		fmt.Println("MAHJONG")
+		// fmt.Println()
+		// fmt.Println("==============================")
+		// fmt.Println()
+		// fmt.Println("GG")
+		// playersJson, _ := json.MarshalIndent(g.State.Players, "", "  ")
+		// fmt.Println(string(playersJson))
+		// fmt.Println("MAHJONG")
 		fmt.Println("isWin: ", g.State.IsWin)
-		fmt.Println("Seed: ", seed)
+		// fmt.Println("Seed: ", seed)
 		if g.State.IsWin {
 			break
 		}
 	}
+}
+
+func ToTrainingSampleString(game *GameHandler) string {
+	sample := ToTrainingSample(game)
+	jsonBytes, _ := json.Marshal(sample)
+	return strings.ReplaceAll(string(jsonBytes), "\n", "")
+}
+
+func ToTrainingSample(game *GameHandler) *dataset.TrainingSample {
+	// TODO: implement
+	trainingSample := &dataset.TrainingSample{
+		Seed:      int(game.Seed),
+		GameID:    game.ID,
+		StateName: game.currState.GetStateName(),
+		Player:    int(game.State.Round.CurrentPlayer),
+		Action:    ToAction(game),
+		Outcome:   ToGameOutcome(game),
+	}
+
+	return trainingSample
+}
+
+func ToAction(game *GameHandler) *dataset.Action {
+	if game.currState == game.discardState {
+		return &dataset.Action{
+			Type: dataset.ActionDiscard,
+		}
+	}
+	if game.currState == game.claimState {
+		// TODO: implement
+	}
+	return nil
+}
+
+func ToGameOutcome(game *GameHandler) *dataset.GameOutcome {
+	// TODO: implement
+	return nil
 }
