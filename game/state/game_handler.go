@@ -41,16 +41,20 @@ func NewGameHandler(id string, config *domain.GameConfig, seed uint64) *GameHand
 			},
 			Players: [4]*domain.PlayerState{
 				{
-					ID: "0",
+					ID:       "0",
+					Position: "E",
 				},
 				{
-					ID: "1",
+					ID:       "1",
+					Position: "S",
 				},
 				{
-					ID: "2",
+					ID:       "2",
+					Position: "W",
 				},
 				{
-					ID: "3",
+					ID:       "3",
+					Position: "N",
 				},
 			},
 			Wall: &domain.Wall{DrawPile: wallTiles},

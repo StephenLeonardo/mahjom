@@ -14,7 +14,8 @@ type IPlayerState interface {
 }
 
 type PlayerState struct {
-	ID string
+	ID       string
+	Position string // E | S | W | N
 
 	Hand     []*Tile
 	Melds    []*Meld
