@@ -102,7 +102,7 @@ func NewGameHandler(id string, config *domain.GameConfig, seed uint64) *GameHand
 
 func Play() {
 
-	for range 1 {
+	for range 100 {
 		seed := uint64(time.Now().Nanosecond())
 		// seed := uint64(1786119936)
 		g := NewGameHandler("gameID", &domain.GameConfig{}, seed)
@@ -146,34 +146,8 @@ func Play() {
 				}
 			}
 
-			// g.State.PrintPlayersHand()
-			// fmt.Scanln()
-
-			// fmt.Println(ToTrainingSampleString(g))
-			// if state != CHECK_WIN_STATE &&
-			// 	state != WIN_STATE &&
-			// 	(state != CLAIM_STATE || g.State.Round.ClaimV3 != nil) {
-			// 	jsonBytes, _ := json.MarshalIndent(eventLog, "", "  ")
-			// 	fmt.Println(string(jsonBytes))
-			// }
-
 			eventLog = resetEventLog(eventLog)
-
-			// fmt.Println()
-			// fmt.Println()
-			// fmt.Println("==============================")
-			// fmt.Println()
-			// fmt.Println()
-
 		}
-
-		// fmt.Println()
-		// fmt.Println("==============================")
-		// fmt.Println()
-		// fmt.Println("GG")
-		// playersJson, _ := json.MarshalIndent(g.State.Players, "", "  ")
-		// fmt.Println(string(playersJson))
-		// fmt.Println("MAHJONG")
 
 		if g.currState == g.checkWinState {
 			g.currState.Resolve()
@@ -196,15 +170,6 @@ func Play() {
 		}
 
 		storeDataset(eventLog, outcomeDatasetFilePath)
-
-		// jsonBytes, _ := json.MarshalIndent(eventLog, "", "  ")
-		// fmt.Println(string(jsonBytes))
-
-		// fmt.Println("isWin: ", g.State.IsWin)
-		// fmt.Println("Seed: ", seed)
-		// if g.State.IsWin {
-		// 	break
-		// }
 	}
 }
 
