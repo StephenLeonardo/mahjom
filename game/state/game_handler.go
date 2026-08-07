@@ -121,6 +121,7 @@ func Play() {
 
 			if err := g.currState.Resolve(); err != nil {
 				fmt.Println("Error: ", err)
+				break
 			}
 
 			switch state {
@@ -147,12 +148,12 @@ func Play() {
 			// fmt.Scanln()
 
 			// fmt.Println(ToTrainingSampleString(g))
-			if state != CHECK_WIN_STATE &&
-				state != WIN_STATE &&
-				(state != CLAIM_STATE || g.State.Round.ClaimV3 != nil) {
-				jsonBytes, _ := json.MarshalIndent(eventLog, "", "  ")
-				fmt.Println(string(jsonBytes))
-			}
+			// if state != CHECK_WIN_STATE &&
+			// 	state != WIN_STATE &&
+			// 	(state != CLAIM_STATE || g.State.Round.ClaimV3 != nil) {
+			// 	jsonBytes, _ := json.MarshalIndent(eventLog, "", "  ")
+			// 	fmt.Println(string(jsonBytes))
+			// }
 
 			switch state {
 			case DISCARD_STATE:
@@ -163,11 +164,11 @@ func Play() {
 
 			eventLog = resetEventLog(eventLog)
 
-			fmt.Println()
-			fmt.Println()
-			fmt.Println("==============================")
-			fmt.Println()
-			fmt.Println()
+			// fmt.Println()
+			// fmt.Println()
+			// fmt.Println("==============================")
+			// fmt.Println()
+			// fmt.Println()
 
 		}
 
