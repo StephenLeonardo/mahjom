@@ -12,6 +12,7 @@ import (
 const (
 	discardDatasetFilePath = "./game/dataset/discard.jsonl"
 	claimDatasetFilePath   = "./game/dataset/claim.jsonl"
+	outcomeDatasetFilePath = "./game/dataset/outcome.jsonl"
 )
 
 type GameHandler struct {
@@ -101,7 +102,7 @@ func NewGameHandler(id string, config *domain.GameConfig, seed uint64) *GameHand
 
 func Play() {
 
-	for range 1000 {
+	for range 100 {
 		seed := uint64(time.Now().Nanosecond())
 		// seed := uint64(1786119936)
 		g := NewGameHandler("gameID", &domain.GameConfig{}, seed)
@@ -198,14 +199,16 @@ func Play() {
 			Tai:          g.State.GetCurrentPlayerState().Score,
 		}
 
-		jsonBytes, _ := json.MarshalIndent(eventLog, "", "  ")
-		fmt.Println(string(jsonBytes))
+		storeDataset(eventLog, outcomeDatasetFilePath)
 
-		fmt.Println("isWin: ", g.State.IsWin)
+		// jsonBytes, _ := json.MarshalIndent(eventLog, "", "  ")
+		// fmt.Println(string(jsonBytes))
+
+		// fmt.Println("isWin: ", g.State.IsWin)
 		// fmt.Println("Seed: ", seed)
-		if g.State.IsWin {
-			break
-		}
+		// if g.State.IsWin {
+		// 	break
+		// }
 	}
 }
 
