@@ -14,16 +14,16 @@ type IPlayerState interface {
 }
 
 type PlayerState struct {
-	ID       string
-	Position string // E | S | W | N
+	ID       string `json:"-"`
+	Position string `json:"position"` // E | S | W | N
 
-	Hand     []*Tile
-	Melds    []*Meld
-	Flowers  []*Tile
-	Animals  []*Tile
-	Discards []*Tile
+	Hand     []*Tile `json:"hand"`
+	Melds    []*Meld `json:"melds"`
+	Flowers  []*Tile `json:"flowers"`
+	Animals  []*Tile `json:"animals"`
+	Discards []*Tile `json:"discards"`
 
-	Score int
+	Score int `json:"-"`
 }
 
 func (p *PlayerState) GetFlowerCount() int {

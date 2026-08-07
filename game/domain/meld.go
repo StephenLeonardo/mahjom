@@ -24,11 +24,9 @@ const (
 )
 
 type Meld struct {
-	Type     MeldType
-	Kong     KongType
-	Tiles    []*Tile
-	FromSeat SeatIndex
-
-	// For logging
-	FromPosition string // E | S | W | N
+	Type         MeldType  `json:"type"`
+	Kong         KongType  `json:"kong"`
+	Tiles        []*Tile   `json:"tiles"`
+	FromSeat     SeatIndex `json:"-"`
+	FromPosition string    `json:"fromPosition"` // E | S | W | N
 }

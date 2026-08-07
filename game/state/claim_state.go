@@ -56,6 +56,8 @@ func (s *ClaimState) Resolve() error {
 
 	round.ClaimV3 = winningClaim
 
+	// TODO: remove the tile from discarder's discard pile
+
 	round.LastDiscard = nil
 	round.LastDiscardBy = domain.SeatNone
 	round.CurrentPlayer = winningClaim.Claimant

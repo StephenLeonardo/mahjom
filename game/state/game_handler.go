@@ -102,7 +102,7 @@ func NewGameHandler(id string, config *domain.GameConfig, seed uint64) *GameHand
 
 func Play() {
 
-	for range 100 {
+	for range 1 {
 		seed := uint64(time.Now().Nanosecond())
 		// seed := uint64(1786119936)
 		g := NewGameHandler("gameID", &domain.GameConfig{}, seed)
@@ -127,6 +127,7 @@ func Play() {
 			switch state {
 			case DISCARD_STATE:
 				eventLog.Tile = g.State.Round.LastDiscard
+				storeDataset(eventLog, discardDatasetFilePath)
 			case DRAW_STATE:
 				eventLog.Tile = g.State.Round.NewlyDrawnTile
 			case CLAIM_STATE:
@@ -141,6 +142,7 @@ func Play() {
 						FromSeat:     discarderPosition,
 						FromPosition: g.State.Players[discarderPosition].Position,
 					}
+					storeDataset(eventLog, claimDatasetFilePath)
 				}
 			}
 
@@ -154,13 +156,6 @@ func Play() {
 			// 	jsonBytes, _ := json.MarshalIndent(eventLog, "", "  ")
 			// 	fmt.Println(string(jsonBytes))
 			// }
-
-			switch state {
-			case DISCARD_STATE:
-				storeDataset(eventLog, discardDatasetFilePath)
-			case CLAIM_STATE:
-				storeDataset(eventLog, claimDatasetFilePath)
-			}
 
 			eventLog = resetEventLog(eventLog)
 

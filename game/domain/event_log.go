@@ -1,20 +1,20 @@
 package domain
 
 type EventLog struct {
-	Seed         int
-	GameID       string
-	RoundNumber  int
-	Action       string // Draw | Discard | Claim
-	CurrPosition string // E | S | W | N
-	Tile         *Tile
-	Meld         *Meld
-	Players      [4]*PlayerState
+	Seed         int             `json:"id"`
+	GameID       string          `json:"-"`
+	RoundNumber  int             `json:"-"`
+	Action       string          `json:"action,omitempty"`       // Draw | Discard | Claim
+	CurrPosition string          `json:"currPosition,omitempty"` // E | S | W | N
+	Tile         *Tile           `json:"tile,omitempty"`
+	Meld         *Meld           `json:"meld,omitempty"`
+	Players      [4]*PlayerState `json:"players"`
 	// PlayerDiscards   [4][]*Tile
 	// PlayerBonusTiles [4][]*Tile
 	// PlayerMelds      [4][]*Meld
 
 	// Outcome
-	Outcome *GameOutcome
+	Outcome *GameOutcome `json:"outcome,omitempty"`
 }
 
 type GameOutcome struct {
