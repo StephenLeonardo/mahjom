@@ -102,7 +102,7 @@ func NewGameHandler(id string, config *domain.GameConfig, seed uint64) *GameHand
 func Play() {
 
 	for range 1000 {
-		seed := uint64(time.Now().Unix())
+		seed := uint64(time.Now().Nanosecond())
 		// seed := uint64(1786119936)
 		g := NewGameHandler("gameID", &domain.GameConfig{}, seed)
 		eventLog := g.EventLog
