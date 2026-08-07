@@ -5,7 +5,13 @@ import (
 	"fmt"
 	"mahjom/game/domain"
 	"mahjom/game/domain/constants"
+	"os"
 	"time"
+)
+
+const (
+	discardDatasetFilePath = "./game/dataset/discard.jsonl"
+	claimDatasetFilePath   = "./game/dataset/claim.jsonl"
 )
 
 type GameHandler struct {
@@ -116,17 +122,23 @@ func Play() {
 				fmt.Println("Error: ", err)
 			}
 
-			if state == CLAIM_STATE &&
-				g.State.Round.ClaimV3 != nil {
-				winnerPosition := g.State.Round.ClaimV3.Claimant
-				discarderPosition := g.State.Round.ClaimV3.Discarder
-				eventLog.CurrPosition = g.State.Players[winnerPosition].Position
-				eventLog.Meld = &domain.Meld{
-					Type:         g.State.Round.ClaimV3.Type,
-					Kong:         g.State.Round.ClaimV3.Kong,
-					Tiles:        g.State.Round.ClaimV3.Tiles,
-					FromSeat:     discarderPosition,
-					FromPosition: g.State.Players[discarderPosition].Position,
+			switch state {
+			case DISCARD_STATE:
+				eventLog.Tile = g.State.Round.LastDiscard
+			case DRAW_STATE:
+				eventLog.Tile = g.State.Round.NewlyDrawnTile
+			case CLAIM_STATE:
+				if g.State.Round.ClaimV3 != nil {
+					winnerPosition := g.State.Round.ClaimV3.Claimant
+					discarderPosition := g.State.Round.ClaimV3.Discarder
+					eventLog.CurrPosition = g.State.Players[winnerPosition].Position
+					eventLog.Meld = &domain.Meld{
+						Type:         g.State.Round.ClaimV3.Type,
+						Kong:         g.State.Round.ClaimV3.Kong,
+						Tiles:        g.State.Round.ClaimV3.Tiles,
+						FromSeat:     discarderPosition,
+						FromPosition: g.State.Players[discarderPosition].Position,
+					}
 				}
 			}
 
@@ -139,6 +151,13 @@ func Play() {
 				(state != CLAIM_STATE || g.State.Round.ClaimV3 != nil) {
 				jsonBytes, _ := json.MarshalIndent(eventLog, "", "  ")
 				fmt.Println(string(jsonBytes))
+			}
+
+			switch state {
+			case DISCARD_STATE:
+				storeDataset(eventLog, discardDatasetFilePath)
+			case CLAIM_STATE:
+				storeDataset(eventLog, claimDatasetFilePath)
 			}
 
 			eventLog = resetEventLog(eventLog)
@@ -158,6 +177,10 @@ func Play() {
 		// playersJson, _ := json.MarshalIndent(g.State.Players, "", "  ")
 		// fmt.Println(string(playersJson))
 		// fmt.Println("MAHJONG")
+
+		if g.currState == g.checkWinState {
+			g.currState.Resolve()
+		}
 
 		outcomeType := "Draw"
 		var winner *string = nil
@@ -192,4 +215,23 @@ func resetEventLog(eventLog *domain.EventLog) *domain.EventLog {
 		Seed:    eventLog.Seed,
 		GameID:  eventLog.GameID,
 	}
+}
+
+func storeDataset(eventLog *domain.EventLog, filepath string) error {
+	jsonBytes, err := json.Marshal(eventLog)
+	if err != nil {
+		return err
+	}
+
+	file, err := os.OpenFile(filepath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	if _, err := file.Write(append(jsonBytes, '\n')); err != nil {
+		return err
+	}
+
+	return nil
 }
