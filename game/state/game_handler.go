@@ -99,6 +99,7 @@ func Play() {
 
 	for range 1000 {
 		seed := uint64(time.Now().Unix())
+		// seed := uint64(1786119936)
 		g := NewGameHandler("gameID", &domain.GameConfig{}, seed)
 		eventLog := g.EventLog
 
@@ -142,7 +143,7 @@ func Play() {
 				fmt.Println(string(jsonBytes))
 			}
 
-			resetEventLog(eventLog)
+			eventLog = resetEventLog(eventLog)
 
 			fmt.Println()
 			fmt.Println()
@@ -224,8 +225,8 @@ func ToGameOutcome(game *GameHandler) *dataset.GameOutcome {
 	return nil
 }
 
-func resetEventLog(eventLog *domain.EventLog) {
-	eventLog = &domain.EventLog{
+func resetEventLog(eventLog *domain.EventLog) *domain.EventLog {
+	return &domain.EventLog{
 		Players: eventLog.Players,
 		Seed:    eventLog.Seed,
 		GameID:  eventLog.GameID,

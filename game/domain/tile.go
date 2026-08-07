@@ -1,6 +1,9 @@
 package domain
 
-import "fmt"
+import (
+	"encoding/json"
+	"fmt"
+)
 
 // Canonical Singapore set: 148 physical tiles.
 //
@@ -50,19 +53,19 @@ var (
 func (t *Tile) Describe() string {
 	switch t.Suit {
 	case SuitCharacter:
-		return fmt.Sprintf("%d Wan", t.Rank)
+		return fmt.Sprintf("#%d %d Wan", t.ID, t.Rank)
 	case SuitBamboo:
-		return fmt.Sprintf("%d Bamboo", t.Rank)
+		return fmt.Sprintf("#%d %d Bamboo", t.ID, t.Rank)
 	case SuitDot:
-		return fmt.Sprintf("%d Dot", t.Rank)
+		return fmt.Sprintf("#%d %d Dot", t.ID, t.Rank)
 	case SuitWind:
-		return windNames[t.Rank]
+		return fmt.Sprintf("#%d %s", t.ID, windNames[t.Rank])
 	case SuitDragon:
-		return dragonNames[t.Rank]
+		return fmt.Sprintf("#%d %s", t.ID, dragonNames[t.Rank])
 	case SuitAnimal:
-		return animalNames[t.Rank]
+		return fmt.Sprintf("#%d %s", t.ID, animalNames[t.Rank])
 	case SuitFlower:
-		return flowerNames[t.Rank]
+		return fmt.Sprintf("#%d %s", t.ID, flowerNames[t.Rank])
 	}
 	return fmt.Sprintf("Unknown tile (suit %d, rank %d)", t.Suit, t.Rank)
 }
@@ -81,4 +84,11 @@ func (t *Tile) IsBonus() bool {
 
 func (t *Tile) IsSuitedForChow() bool {
 	return t.Suit == SuitCharacter || t.Suit == SuitBamboo || t.Suit == SuitDot
+}
+
+func (t *Tile) MarshalJSON() ([]byte, error) {
+	if t == nil {
+		return []byte("null"), nil
+	}
+	return json.Marshal(t.Describe())
 }

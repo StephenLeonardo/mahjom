@@ -11,6 +11,7 @@ var (
 	ErrMustDraw          = errors.New("player must draw before discarding")
 	ErrMustDiscard       = errors.New("player must discard before drawing")
 	ErrTileNotInHand     = errors.New("tile is not in the player's hand")
+	ErrNoTileToDiscard   = errors.New("can not decide to discard a tile")
 	ErrTileNotClaim      = errors.New("tile is not claimable for the requested meld")
 	ErrNotClaimSeat      = errors.New("it is not this seat's turn to declare or pass")
 	ErrAlreadyActed      = errors.New("seat has already declared or passed in this claim window")

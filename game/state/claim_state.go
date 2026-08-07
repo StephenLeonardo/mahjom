@@ -71,6 +71,11 @@ func (s *ClaimState) Resolve() error {
 		return nil
 	}
 
+	if winningClaim.ClaimType == domain.ClaimKong {
+		s.game.currState = s.game.drawState
+		return nil
+	}
+
 	s.game.currState = s.game.discardState
 	return nil
 }

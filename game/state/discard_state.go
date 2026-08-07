@@ -29,12 +29,12 @@ func (s *DiscardState) Resolve() error {
 	player := s.game.State.GetCurrentPlayerState()
 	tile := chooseDiscardTile(player)
 	if tile == nil {
-		return domain.ErrTileNotInHand
+		return domain.ErrNoTileToDiscard
 	}
 
 	removed, ok := player.RemoveFromHand(tile.ID)
 	if !ok {
-		return domain.ErrTileNotInHand
+		return fmt.Errorf("%s, tile: %s,", domain.ErrTileNotInHand.Error(), tile.Describe())
 	}
 	tile = removed
 
