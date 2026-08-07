@@ -1,17 +1,17 @@
 package domain
 
 type EventLog struct {
-	Seed             int
-	GameID           string
-	RoundNumber      int
-	Action           string // Draw | Discard | Claim
-	Player           int    // E | S | W | N
-	Tile             *Tile
-	Meld             *Meld
-	Players          [4]*PlayerState
-	PlayerDiscards   [4][]*Tile
-	PlayerBonusTiles [4][]*Tile
-	PlayerMelds      [4][]*Meld
+	Seed         int
+	GameID       string
+	RoundNumber  int
+	Action       string // Draw | Discard | Claim
+	CurrPosition string // E | S | W | N
+	Tile         *Tile
+	Meld         *Meld
+	Players      [4]*PlayerState
+	// PlayerDiscards   [4][]*Tile
+	// PlayerBonusTiles [4][]*Tile
+	// PlayerMelds      [4][]*Meld
 
 	// Outcome
 	Outcome *GameOutcome

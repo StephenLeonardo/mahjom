@@ -2,13 +2,17 @@ package state
 
 import "mahjom/game/domain"
 
+const (
+	DRAW_STATE = "DRAW"
+)
+
 type DrawState struct {
 	defaultState
 	game *GameHandler
 }
 
 func (s *DrawState) GetStateName() string {
-	return "draw state"
+	return DRAW_STATE
 }
 
 func (s *DrawState) drawHandTile(player *domain.PlayerState) (*domain.Tile, bool) {

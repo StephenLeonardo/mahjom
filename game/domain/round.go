@@ -23,6 +23,7 @@ type Round struct {
 
 	Claim   *ClaimWindow
 	ClaimV2 *ClaimWindowV2
+	ClaimV3 *ClaimDecl
 }
 
 type ClaimWindow struct {

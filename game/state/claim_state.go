@@ -1,10 +1,13 @@
 package state
 
 import (
-	"fmt"
 	"mahjom/game/domain"
 	"mahjom/game/utils"
 	"sort"
+)
+
+const (
+	CLAIM_STATE = "CLAIM"
 )
 
 type ClaimState struct {
@@ -13,7 +16,7 @@ type ClaimState struct {
 }
 
 func (s *ClaimState) GetStateName() string {
-	return "claim state"
+	return CLAIM_STATE
 }
 
 func (s *ClaimState) Resolve() error {
@@ -51,10 +54,11 @@ func (s *ClaimState) Resolve() error {
 		return nil
 	}
 
+	round.ClaimV3 = winningClaim
+
 	round.LastDiscard = nil
 	round.LastDiscardBy = domain.SeatNone
 	round.CurrentPlayer = winningClaim.Claimant
-	fmt.Println("New Claimant: ", winningClaim.Claimant)
 
 	player := s.game.State.Players[winningClaim.Claimant]
 	player.AddToMelds(winningClaim)

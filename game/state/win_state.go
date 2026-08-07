@@ -2,13 +2,17 @@ package state
 
 import "mahjom/game/domain"
 
+const (
+	WIN_STATE = "WIN"
+)
+
 type WinState struct {
 	defaultState
 	game *GameHandler
 }
 
 func (s *WinState) GetStateName() string {
-	return "win state"
+	return WIN_STATE
 }
 
 func (s *WinState) Resolve() error {

@@ -5,13 +5,17 @@ import (
 	"mahjom/game/domain"
 )
 
+const (
+	DISCARD_STATE = "DISCARD"
+)
+
 type DiscardState struct {
 	defaultState
 	game *GameHandler
 }
 
 func (s *DiscardState) GetStateName() string {
-	return "discard state"
+	return DISCARD_STATE
 }
 
 func (s *DiscardState) Resolve() error {

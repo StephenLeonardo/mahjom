@@ -28,4 +28,7 @@ type Meld struct {
 	Kong     KongType
 	Tiles    []*Tile
 	FromSeat SeatIndex
+
+	// For logging
+	FromPosition string // E | S | W | N
 }

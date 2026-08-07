@@ -111,3 +111,19 @@ func deepCopyJSON(src interface{}, dst interface{}) error {
 	}
 	return json.Unmarshal(bytes, dst)
 }
+
+func (g *GameState) GetWinningTiles() []*Tile {
+
+	winner := g.GetCurrentPlayerState()
+
+	res := append([]*Tile{}, winner.Hand...)
+
+	for _, meld := range winner.Melds {
+		res = append(res, meld.Tiles...)
+	}
+
+	res = append(res, winner.Animals...)
+	res = append(res, winner.Flowers...)
+
+	return res
+}
