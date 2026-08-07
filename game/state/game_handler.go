@@ -3,10 +3,8 @@ package state
 import (
 	"encoding/json"
 	"fmt"
-	"mahjom/game/dataset"
 	"mahjom/game/domain"
 	"mahjom/game/domain/constants"
-	"strings"
 	"time"
 )
 
@@ -186,43 +184,6 @@ func Play() {
 			break
 		}
 	}
-}
-
-func ToTrainingSampleString(game *GameHandler) string {
-	sample := ToTrainingSample(game)
-	jsonBytes, _ := json.Marshal(sample)
-	return strings.ReplaceAll(string(jsonBytes), "\n", "")
-}
-
-func ToTrainingSample(game *GameHandler) *dataset.TrainingSample {
-	// TODO: implement
-	trainingSample := &dataset.TrainingSample{
-		Seed:      int(game.Seed),
-		GameID:    game.ID,
-		StateName: game.currState.GetStateName(),
-		Player:    int(game.State.Round.CurrentPlayer),
-		Action:    ToAction(game),
-		Outcome:   ToGameOutcome(game),
-	}
-
-	return trainingSample
-}
-
-func ToAction(game *GameHandler) *dataset.Action {
-	if game.currState == game.discardState {
-		return &dataset.Action{
-			Type: dataset.ActionDiscard,
-		}
-	}
-	if game.currState == game.claimState {
-		// TODO: implement
-	}
-	return nil
-}
-
-func ToGameOutcome(game *GameHandler) *dataset.GameOutcome {
-	// TODO: implement
-	return nil
 }
 
 func resetEventLog(eventLog *domain.EventLog) *domain.EventLog {
