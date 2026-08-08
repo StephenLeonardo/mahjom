@@ -3,7 +3,7 @@ package domain
 type EventLog struct {
 	Seed              int             `json:"id"`
 	GameID            string          `json:"-"`
-	RoundNumber       int             `json:"-"`
+	DiscardTurnNumber int             `json:"discardTurnNumber"`
 	Action            string          `json:"action,omitempty"`       // Draw | Discard | Claim
 	CurrPosition      string          `json:"currPosition,omitempty"` // E | S | W | N
 	Tile              *Tile           `json:"tile,omitempty"`

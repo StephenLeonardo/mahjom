@@ -112,7 +112,6 @@ func Play() {
 			eventLog.CurrPosition = g.State.GetCurrentPlayerState().Position
 			state := g.currState.GetStateName()
 			eventLog.Action = state
-			eventLog.RoundNumber = g.State.Round.Number
 
 			if err := g.currState.Resolve(); err != nil {
 				fmt.Println("Error: ", err)
@@ -122,6 +121,7 @@ func Play() {
 			case DISCARD_STATE:
 				eventLog.Tile = g.State.Round.LastDiscard
 				eventLog.TileDiscardScores = g.State.Round.TileDiscardScores
+				eventLog.DiscardTurnNumber += 1
 				storeDataset(eventLog, discardDatasetFilePath)
 			case DRAW_STATE:
 				eventLog.Tile = g.State.Round.NewlyDrawnTile
@@ -172,9 +172,10 @@ func Play() {
 
 func resetEventLog(eventLog *domain.EventLog) *domain.EventLog {
 	return &domain.EventLog{
-		Players: eventLog.Players,
-		Seed:    eventLog.Seed,
-		GameID:  eventLog.GameID,
+		Players:           eventLog.Players,
+		Seed:              eventLog.Seed,
+		GameID:            eventLog.GameID,
+		DiscardTurnNumber: eventLog.DiscardTurnNumber,
 	}
 }
 
