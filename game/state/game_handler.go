@@ -117,6 +117,8 @@ func Play() {
 				fmt.Println("Error: ", err)
 			}
 
+			eventLog.RemainingDrawTiles = int(g.State.Wall.Remaining())
+
 			switch state {
 			case DISCARD_STATE:
 				eventLog.Tile = g.State.Round.LastDiscard
