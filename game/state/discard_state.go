@@ -27,7 +27,7 @@ func (s *DiscardState) Resolve() error {
 
 	// TODO: prompt user which tile to discard
 	player := s.game.State.GetCurrentPlayerState()
-	tile := chooseDiscardTile(player)
+	tile, scores := chooseDiscardTile(player)
 	if tile == nil {
 		return domain.ErrNoTileToDiscard
 	}
@@ -53,6 +53,7 @@ func (s *DiscardState) Resolve() error {
 	round.LastDiscard = tile
 	round.LastDiscardBy = s.game.State.Round.CurrentPlayer
 	round.NewlyDrawnTile = nil
+	round.TileDiscardScores = scores
 
 	s.game.currState = s.game.claimState
 	return nil
@@ -65,9 +66,9 @@ const (
 	discardSuitedBase     = 1
 )
 
-func chooseDiscardTile(player *domain.PlayerState) *domain.Tile {
+func chooseDiscardTile(player *domain.PlayerState) (*domain.Tile, map[string]int) {
 	if player == nil || len(player.Hand) == 0 {
-		return nil
+		return nil, nil
 	}
 
 	counts := make(map[domain.Suit]map[uint8]int)
@@ -75,11 +76,15 @@ func chooseDiscardTile(player *domain.PlayerState) *domain.Tile {
 		if tile == nil {
 			continue
 		}
+
 		if _, ok := counts[tile.Suit]; !ok {
 			counts[tile.Suit] = make(map[uint8]int)
 		}
+
 		counts[tile.Suit][tile.Rank]++
 	}
+
+	scores := make(map[string]int)
 
 	var best *domain.Tile
 	bestScore := int(^uint(0) >> 1)
@@ -90,13 +95,17 @@ func chooseDiscardTile(player *domain.PlayerState) *domain.Tile {
 		}
 
 		score := discardTileScore(tile, counts)
-		if best == nil || score < bestScore || (score == bestScore && tile.ID < best.ID) {
+		scores[tile.GetRankSuit()] = score
+
+		if best == nil ||
+			score < bestScore ||
+			(score == bestScore && tile.ID < best.ID) {
 			best = tile
 			bestScore = score
 		}
 	}
 
-	return best
+	return best, scores
 }
 
 func discardTileScore(tile *domain.Tile, counts map[domain.Suit]map[uint8]int) int {

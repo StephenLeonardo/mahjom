@@ -3,6 +3,7 @@ package domain
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 )
 
 // Canonical Singapore set: 148 physical tiles.
@@ -91,4 +92,11 @@ func (t *Tile) MarshalJSON() ([]byte, error) {
 		return []byte("null"), nil
 	}
 	return json.Marshal(t.Describe())
+}
+
+func (t *Tile) GetRankSuit() string {
+	return strings.TrimPrefix(
+		t.Describe(),
+		fmt.Sprintf("#%d ", t.ID),
+	)
 }

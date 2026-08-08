@@ -17,9 +17,10 @@ type Round struct {
 	Phase         RoundPhase
 	CurrentPlayer SeatIndex
 
-	NewlyDrawnTile *Tile
-	LastDiscard    *Tile
-	LastDiscardBy  SeatIndex
+	NewlyDrawnTile    *Tile
+	LastDiscard       *Tile
+	LastDiscardBy     SeatIndex
+	TileDiscardScores map[string]int
 
 	Claim   *ClaimWindow
 	ClaimV2 *ClaimWindowV2

@@ -121,6 +121,7 @@ func Play() {
 			switch state {
 			case DISCARD_STATE:
 				eventLog.Tile = g.State.Round.LastDiscard
+				eventLog.TileDiscardScores = g.State.Round.TileDiscardScores
 				storeDataset(eventLog, discardDatasetFilePath)
 			case DRAW_STATE:
 				eventLog.Tile = g.State.Round.NewlyDrawnTile
@@ -203,4 +204,5 @@ func resetRound(round *domain.Round) {
 	round.ClaimV2 = nil
 	round.ClaimV3 = nil
 	round.NewlyDrawnTile = nil
+	round.TileDiscardScores = nil
 }

@@ -16,7 +16,7 @@ func TestChooseDiscardTilePrefersIsolatedHonorOverUsefulTiles(t *testing.T) {
 		},
 	}
 
-	tile := chooseDiscardTile(player)
+	tile, _ := chooseDiscardTile(player)
 
 	if tile == nil {
 		t.Fatal("chooseDiscardTile() = nil, want an isolated tile")
@@ -37,7 +37,7 @@ func TestChooseDiscardTileAvoidsDiscardingAFlatPair(t *testing.T) {
 		},
 	}
 
-	tile := chooseDiscardTile(player)
+	tile, _ := chooseDiscardTile(player)
 
 	if tile == nil {
 		t.Fatal("chooseDiscardTile() = nil, want a tile")
@@ -58,7 +58,7 @@ func TestChooseDiscardTileAvoidsDiscardingTwoInARow(t *testing.T) {
 		},
 	}
 
-	tile := chooseDiscardTile(player)
+	tile, _ := chooseDiscardTile(player)
 
 	if tile == nil {
 		t.Fatal("chooseDiscardTile() = nil, want a tile")
@@ -79,7 +79,7 @@ func TestChooseDiscardTileAvoidsDiscardingOneGapSequence(t *testing.T) {
 		},
 	}
 
-	tile := chooseDiscardTile(player)
+	tile, _ := chooseDiscardTile(player)
 
 	if tile == nil {
 		t.Fatal("chooseDiscardTile() = nil, want a tile")
