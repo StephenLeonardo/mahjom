@@ -18,11 +18,11 @@ type EventLog struct {
 }
 
 type GameOutcome struct {
-	OutcomeType string // Win | Draw
+	OutcomeType string `json:"outcomeType"` // Win | Draw
 
-	Winner *string // E | S | W | N
+	Winner *string `json:"winner"` // E | S | W | N
 
-	WinningTiles []*Tile
+	WinningTiles []*Tile `json:"winningTiles"`
 
-	Tai int
+	Tai int `json:"tai"`
 }
