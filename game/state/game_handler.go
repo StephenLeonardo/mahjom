@@ -10,9 +10,9 @@ import (
 )
 
 const (
-	discardDatasetFilePath = "./game/dataset/discard.jsonl"
-	claimDatasetFilePath   = "./game/dataset/claim.jsonl"
-	outcomeDatasetFilePath = "./game/dataset/outcome.jsonl"
+	discardDatasetFilePath = "./dataset/discard.jsonl"
+	claimDatasetFilePath   = "./dataset/claim.jsonl"
+	outcomeDatasetFilePath = "./dataset/outcome.jsonl"
 )
 
 type GameHandler struct {
