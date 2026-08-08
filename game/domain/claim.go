@@ -27,7 +27,7 @@ type ClaimDecl struct {
 	ClaimType ClaimType
 	Type      MeldType // MeldPong, MeldKong, or MeldChow
 	Kong      KongType // only meaningful when Type == MeldKong (KongExposed)
-	Tile      *Tile    //  Deprecated
+	Tile      *Tile
 	Tiles     []*Tile
 }
 

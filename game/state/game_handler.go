@@ -109,11 +109,6 @@ func Play() {
 		eventLog := g.EventLog
 
 		for !g.State.IsGameEnd() {
-
-			g.State.Round.Claim = nil
-			g.State.Round.ClaimV2 = nil
-			g.State.Round.ClaimV3 = nil
-
 			eventLog.CurrPosition = g.State.GetCurrentPlayerState().Position
 			state := g.currState.GetStateName()
 			eventLog.Action = state
@@ -121,7 +116,6 @@ func Play() {
 
 			if err := g.currState.Resolve(); err != nil {
 				fmt.Println("Error: ", err)
-				break
 			}
 
 			switch state {
@@ -142,11 +136,13 @@ func Play() {
 						FromSeat:     discarderPosition,
 						FromPosition: g.State.Players[discarderPosition].Position,
 					}
+					eventLog.Tile = g.State.Round.LastDiscard
 					storeDataset(eventLog, claimDatasetFilePath)
 				}
 			}
 
 			eventLog = resetEventLog(eventLog)
+			resetRound(g.State.Round)
 		}
 
 		if g.currState == g.checkWinState {
@@ -198,4 +194,13 @@ func storeDataset(eventLog *domain.EventLog, filepath string) error {
 	}
 
 	return nil
+}
+
+func resetRound(round *domain.Round) {
+	// round.LastDiscard = nil
+	// round.LastDiscardBy = domain.SeatNone
+	round.Claim = nil
+	round.ClaimV2 = nil
+	round.ClaimV3 = nil
+	round.NewlyDrawnTile = nil
 }

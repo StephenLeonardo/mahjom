@@ -57,9 +57,9 @@ func (s *ClaimState) Resolve() error {
 	round.ClaimV3 = winningClaim
 
 	// TODO: remove the tile from discarder's discard pile
+	discarder := s.game.State.Players[winningClaim.Discarder]
+	discarder.RemoveFromDiscards(round.LastDiscard.ID)
 
-	round.LastDiscard = nil
-	round.LastDiscardBy = domain.SeatNone
 	round.CurrentPlayer = winningClaim.Claimant
 
 	player := s.game.State.Players[winningClaim.Claimant]
@@ -145,21 +145,21 @@ func (s *ClaimState) generateAllPossibleClaimsForPlayer(discarder, claimant doma
 			player.RemoveFromHand(discarded.ID)
 
 			if hasPong {
-				res = append(res, s.generateClaimDecl(discarder, claimant, matching[:3], claimType, domain.MeldPong, domain.KongNone))
+				res = append(res, s.generateClaimDecl(discarder, claimant, discarded, matching[:3], claimType, domain.MeldPong, domain.KongNone))
 			}
 			if hasKong {
-				res = append(res, s.generateClaimDecl(discarder, claimant, matching[:4], claimType, domain.MeldKong, domain.KongExposed))
+				res = append(res, s.generateClaimDecl(discarder, claimant, discarded, matching[:4], claimType, domain.MeldKong, domain.KongExposed))
 			}
 			if hasChow {
 				res = append(res, chows...)
 			}
 		case domain.ClaimPong:
 			if hasPong {
-				res = append(res, s.generateClaimDecl(discarder, claimant, matching[:3], claimType, domain.MeldPong, domain.KongNone))
+				res = append(res, s.generateClaimDecl(discarder, claimant, discarded, matching[:3], claimType, domain.MeldPong, domain.KongNone))
 			}
 		case domain.ClaimKong:
 			if hasKong {
-				res = append(res, s.generateClaimDecl(discarder, claimant, matching[:4], claimType, domain.MeldKong, domain.KongExposed))
+				res = append(res, s.generateClaimDecl(discarder, claimant, discarded, matching[:4], claimType, domain.MeldKong, domain.KongExposed))
 			}
 		case domain.ClaimChow:
 			if hasChow {
@@ -191,7 +191,7 @@ func (s *ClaimState) claimChows(discarder, claimant domain.SeatIndex, discarded 
 	player := s.game.State.Players[claimant]
 	chowTiles := s.getAllPossibleChowCombinations(player, discarded)
 	for _, tiles := range chowTiles {
-		res = append(res, s.generateClaimDecl(discarder, claimant, tiles, claimType, domain.MeldChow, domain.KongNone))
+		res = append(res, s.generateClaimDecl(discarder, claimant, discarded, tiles, claimType, domain.MeldChow, domain.KongNone))
 	}
 
 	return res
@@ -200,6 +200,7 @@ func (s *ClaimState) claimChows(discarder, claimant domain.SeatIndex, discarded 
 func (s *ClaimState) generateClaimDecl(
 	discarder,
 	claimantIndex domain.SeatIndex,
+	discardedTile *domain.Tile,
 	tiles []*domain.Tile,
 	claimType domain.ClaimType,
 	meldType domain.MeldType,
@@ -211,6 +212,7 @@ func (s *ClaimState) generateClaimDecl(
 		ClaimType: claimType,
 		Type:      meldType,
 		Kong:      kongType,
+		Tile:      discardedTile,
 		Tiles:     tiles,
 	}
 

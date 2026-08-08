@@ -130,3 +130,15 @@ func (p *PlayerState) GetMatchingInHand(t *Tile) []*Tile {
 	}
 	return res
 }
+
+func (p *PlayerState) RemoveFromDiscards(id TileID) (*Tile, bool) {
+	for i, tile := range p.Discards {
+		if tile.ID != id {
+			continue
+		}
+
+		p.Discards = slices.Delete(p.Discards, i, i+1)
+		return tile, true
+	}
+	return nil, false
+}
