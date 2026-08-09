@@ -19,7 +19,7 @@ type KongType uint8
 const (
 	KongNone KongType = iota
 	KongExposed
-	KongConcealed
+	KongConcealed // Considering to deprecate
 	KongAdded
 )
 

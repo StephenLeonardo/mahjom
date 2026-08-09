@@ -44,7 +44,60 @@ func (s *DrawState) Resolve() error {
 	if !ok {
 		return domain.ErrWallEmpty
 	}
+
 	round.NewlyDrawnTile = tile
+
+	if s.checkAndResolveKongFromHand(tile) || s.checkAndResolveKongFromMelds(tile) {
+		s.game.currState = s.game.drawState
+		return nil
+	}
+
 	s.game.currState = s.game.checkWinState
 	return nil
+}
+
+func (s *DrawState) checkAndResolveKongFromHand(tile *domain.Tile) (hasKong bool) {
+	player := s.game.State.GetCurrentPlayerState()
+	tiles := player.FindMatchingTilesFromHand(tile)
+	if len(tiles) != 4 {
+		return
+	}
+
+	hasKong = true
+
+	meld := &domain.Meld{
+		Type:         domain.MeldKong,
+		Kong:         domain.KongExposed,
+		Tiles:        tiles,
+		FromSeat:     domain.SeatNone,
+		FromPosition: "",
+	}
+	player.Melds = append(player.Melds, meld)
+
+	for _, t := range tiles {
+		player.RemoveFromHand(t.ID)
+	}
+
+	return
+}
+
+func (s *DrawState) checkAndResolveKongFromMelds(tile *domain.Tile) (hasKong bool) {
+	player := s.game.State.GetCurrentPlayerState()
+
+	for _, meld := range player.Melds {
+		if meld.Type != domain.MeldPong || len(meld.Tiles) == 0 {
+			continue
+		}
+
+		if meld.Tiles[0].GetRankSuit() != tile.GetRankSuit() {
+			continue
+		}
+
+		hasKong = true
+		meld.Tiles = append(meld.Tiles, tile)
+		meld.Type = domain.MeldKong
+		meld.Kong = domain.KongAdded
+	}
+
+	return
 }

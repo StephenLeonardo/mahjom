@@ -131,6 +131,16 @@ func (p *PlayerState) GetMatchingInHand(t *Tile) []*Tile {
 	return res
 }
 
+func (p *PlayerState) FindMatchingTilesFromHand(t *Tile) []*Tile {
+	res := []*Tile{}
+	for _, h := range p.Hand {
+		if h.Suit == t.Suit && h.Rank == t.Rank {
+			res = append(res, h)
+		}
+	}
+	return res
+}
+
 func (p *PlayerState) RemoveFromDiscards(id TileID) (*Tile, bool) {
 	for i, tile := range p.Discards {
 		if tile.ID != id {
