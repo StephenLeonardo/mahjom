@@ -1,156 +1,193 @@
 package domain
 
-// tileKey identifies a tile by (suit, rank), independent of physical
-// TileID. Used by helpers that group tiles by kind for meld/pair checks.
 type tileKey struct {
 	suit Suit
 	rank uint8
 }
 
-func countMeldsIncludingHand(p *PlayerState) int {
-	// Start with the player's already-committed melds (Pong, Kong, Chow).
-	count := len(p.Melds)
-
-	// Build a working copy of the hand so we don't mutate player state
-	// while counting. Group tiles by (suit, rank) so we can find Pongs
-	// (3+ of a kind) and Chows (3 consecutive suited ranks).
-	byKind := make(map[tileKey][]*Tile)
-	for _, t := range p.Hand {
-		k := tileKey{t.Suit, t.Rank}
-		byKind[k] = append(byKind[k], t)
-	}
-
-	// Step 1: Pongs (3+ of any suit+rank, including honors and 4-of-a-
-	// kind). Each group of 3 counts as one meld; the 4th tile in a
-	// 4-of-a-kind is left in the bucket for any later pair check.
-	for k, group := range byKind {
-		count += len(group) / 3
-		byKind[k] = group[:len(group)%3] // keep the 0, 1, or 2 leftover tiles
-	}
-
-	// Step 2: Chows (3 consecutive suited ranks). Honors cannot form
-	// Chows, so skip them here.
-	byRank := make(map[Suit][10]int) // index 1..9 used
-	for k, leftover := range byKind {
-		if k.suit == SuitWind || k.suit == SuitDragon {
-			continue
-		}
-		if int(k.rank) < 1 || int(k.rank) > 9 {
-			continue
-		}
-		existing := byRank[k.suit]
-		existing[k.rank] = len(leftover)
-		byRank[k.suit] = existing
-	}
-	for suit := SuitCharacter; suit <= SuitDot; suit++ {
-		ranks, ok := byRank[suit]
-		if !ok {
-			continue
-		}
-		// Walk ranks 1..7; a Chow starting at r uses r, r+1, r+2.
-		for r := 1; r <= 7; r++ {
-			for ranks[r] > 0 && ranks[r+1] > 0 && ranks[r+2] > 0 {
-				ranks[r]--
-				ranks[r+1]--
-				ranks[r+2]--
-				count++
-			}
-		}
-	}
-
-	// When the hand is the full 14 tiles (13 in p.Hand + 1 winning
-	// tile added by the caller) and count is 4, the remaining 2 tiles
-	// just need to form a pair for a winning hand.
-	return count
-}
-
 // IsSimpleWinningHand reports whether the player's committed melds plus
-// the tiles remaining in p.Hand together form a standard winning hand:
-// exactly 4 melds (Pong, Kong, or Chow) and 1 pair.
+// the tiles remaining in p.Hand form a standard winning hand:
 //
-// A "simple" hand is the basic 4-melds-and-a-pair structure. Special
-// hands (7 pairs, 13 wonders, etc.) are not considered here.
+//   - exactly 4 total melds
+//   - exactly 1 pair
 //
-// Callers that have just drawn the winning tile should add it
-// to p.Hand before calling.
+// A committed Kong counts as one meld even though it contains 4 physical
+// tiles.
+//
+// The hand may therefore contain 14, 15, 16, ... physical tiles depending
+// on the number of committed Kongs.
+//
+// Callers that have just drawn the winning tile should add it to p.Hand
+// before calling.
 func IsSimpleWinningHand(p *PlayerState) bool {
-	// // Standard winning hand is 14 tiles. Committed melds account for
-	// // 3 each; the rest must be in p.Hand.
-	// totalTiles := len(p.Melds)*3 + len(p.Hand)
-	// if totalTiles != 14 {
-	// 	return false
-	// }
+	committedMelds := len(p.Melds)
 
-	if countMeldsIncludingHand(p) != 4 {
+	// A standard hand has exactly 4 melds.
+	if committedMelds > 4 {
 		return false
 	}
 
-	// The leftover tiles after extracting the 4 melds must form a pair.
-	// We re-run the greedy extraction on tile counts and inspect what's
-	// left.
-	leftovers := leftoverTileCounts(p)
-	if len(leftovers) != 1 {
-		// Either 0 leftovers (impossible: 14 - 4*3 = 2) or 2+ distinct
-		// kinds remain, neither of which is a pair.
+	// Number of additional melds required from the concealed hand.
+	requiredMelds := 4 - committedMelds
+
+	counts := tileCounts(p.Hand)
+
+	// The remaining hand must be exactly:
+	//
+	//   requiredMelds * 3 + 2
+	//
+	// physical tiles.
+	//
+	// Committed Kongs are intentionally not included here because they
+	// are already represented by p.Melds.
+	expectedHandTiles := requiredMelds*3 + 2
+
+	if totalTileCount(counts) != expectedHandTiles {
 		return false
 	}
-	for _, n := range leftovers {
-		if n != 2 {
-			return false
-		}
-	}
-	return true
+
+	return canFormWinningHand(counts, requiredMelds)
 }
 
-// leftoverTileCounts returns the number of tiles left over after
-// greedily extracting Pongs and Chows from p.Hand, grouped by
-// (suit, rank). Used by IsSimpleWinningHand to detect a pair.
-func leftoverTileCounts(p *PlayerState) map[tileKey]int {
+// tileCounts groups physical hand tiles by tile kind.
+func tileCounts(hand []*Tile) map[tileKey]int {
 	counts := make(map[tileKey]int)
-	for _, t := range p.Hand {
-		counts[tileKey{t.Suit, t.Rank}]++
-	}
 
-	// Step 1: Pongs (3+ of any kind). Each group of 3 becomes a meld;
-	// the 0/1/2 remainder is leftover.
-	for k, n := range counts {
-		counts[k] = n % 3
-	}
+	for _, t := range hand {
+		key := tileKey{
+			suit: t.Suit,
+			rank: t.Rank,
+		}
 
-	// Step 2: Chows (3 consecutive suited ranks). Honors can't form
-	// Chows, so they stay as leftovers untouched.
-	bySuitRank := make(map[Suit][10]int) // index 1..9 used
-	for k, n := range counts {
-		if k.suit == SuitWind || k.suit == SuitDragon {
-			continue
-		}
-		if int(k.rank) < 1 || int(k.rank) > 9 {
-			continue
-		}
-		existing := bySuitRank[k.suit]
-		existing[k.rank] = n
-		bySuitRank[k.suit] = existing
-	}
-	for suit := SuitCharacter; suit <= SuitDot; suit++ {
-		ranks, ok := bySuitRank[suit]
-		if !ok {
-			continue
-		}
-		// Walk ranks 1..7; a Chow starting at r uses r, r+1, r+2.
-		for r := 1; r <= 7; r++ {
-			for ranks[r] > 0 && ranks[r+1] > 0 && ranks[r+2] > 0 {
-				ranks[r]--
-				ranks[r+1]--
-				ranks[r+2]--
-			}
-		}
-		// Write the remaining counts back to the main map.
-		for r := 1; r <= 9; r++ {
-			if ranks[r] > 0 {
-				counts[tileKey{suit, uint8(r)}] = ranks[r]
-			}
-		}
+		counts[key]++
 	}
 
 	return counts
+}
+
+// totalTileCount returns the number of physical tiles represented
+// by the tile-count map.
+func totalTileCount(counts map[tileKey]int) int {
+	total := 0
+
+	for _, count := range counts {
+		total += count
+	}
+
+	return total
+}
+
+// canFormWinningHand determines whether the remaining hand can be
+// decomposed into:
+//
+//   - requiredMelds melds
+//   - exactly one pair
+//
+// It uses backtracking rather than greedy extraction because a tile
+// can sometimes participate in multiple valid decompositions.
+func canFormWinningHand(
+	counts map[tileKey]int,
+	requiredMelds int,
+) bool {
+	if requiredMelds == 0 {
+		return hasPair(counts)
+	}
+
+	// Find the first remaining tile.
+	key, ok := firstTile(counts)
+	if !ok {
+		return false
+	}
+
+	// ---------------------------------------------------------
+	// Option 1: use this tile as a Pong
+	// ---------------------------------------------------------
+
+	if counts[key] >= 3 {
+		counts[key] -= 3
+
+		if canFormWinningHand(counts, requiredMelds-1) {
+			counts[key] += 3
+			return true
+		}
+
+		counts[key] += 3
+	}
+
+	// ---------------------------------------------------------
+	// Option 2: use this tile as the beginning of a Chow
+	// ---------------------------------------------------------
+
+	if isSuited(key.suit) &&
+		key.rank >= 1 &&
+		key.rank <= 7 {
+
+		second := tileKey{
+			suit: key.suit,
+			rank: key.rank + 1,
+		}
+
+		third := tileKey{
+			suit: key.suit,
+			rank: key.rank + 2,
+		}
+
+		if counts[second] > 0 && counts[third] > 0 {
+			counts[key]--
+			counts[second]--
+			counts[third]--
+
+			if canFormWinningHand(counts, requiredMelds-1) {
+				counts[key]++
+				counts[second]++
+				counts[third]++
+				return true
+			}
+
+			counts[key]++
+			counts[second]++
+			counts[third]++
+		}
+	}
+
+	return false
+}
+
+// hasPair checks whether exactly one pair can be selected from
+// the remaining tiles.
+//
+// At the point this function is called, all required melds have
+// already been extracted.
+func hasPair(counts map[tileKey]int) bool {
+	for key, count := range counts {
+		if count >= 2 {
+			counts[key] -= 2
+
+			// A valid winning hand must have no tiles left.
+			if totalTileCount(counts) == 0 {
+				counts[key] += 2
+				return true
+			}
+
+			counts[key] += 2
+		}
+	}
+
+	return false
+}
+
+// firstTile returns any remaining tile kind.
+func firstTile(counts map[tileKey]int) (tileKey, bool) {
+	for key, count := range counts {
+		if count > 0 {
+			return key, true
+		}
+	}
+
+	return tileKey{}, false
+}
+
+// isSuited returns whether the tile can participate in a Chow.
+func isSuited(suit Suit) bool {
+	return suit >= SuitCharacter && suit <= SuitDot
 }

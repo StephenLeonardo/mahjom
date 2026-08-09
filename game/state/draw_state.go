@@ -40,18 +40,33 @@ func (s *DrawState) Resolve() error {
 		return domain.ErrRoundNotInPlay
 	}
 
-	tile, ok := s.drawHandTile(s.game.State.GetCurrentPlayerState())
-	if !ok {
-		return domain.ErrWallEmpty
+	var tile *domain.Tile
+	var ok bool
+	for {
+		tile, ok = s.drawHandTile(s.game.State.GetCurrentPlayerState())
+		if !ok {
+			return domain.ErrWallEmpty
+		}
+		if !s.checkAndResolveKongFromHand(tile) && !s.checkAndResolveKongFromMelds(tile) {
+			break
+		}
 	}
+
+	// tile, ok := s.drawHandTile(s.game.State.GetCurrentPlayerState())
+	// if !ok {
+	// 	return domain.ErrWallEmpty
+	// }
+
+	// if s.checkAndResolveKongFromHand(tile) {
+	// 	s.game.currState = s.game.drawState
+	// 	return nil
+	// }
+	// if s.checkAndResolveKongFromMelds(tile) {
+	// 	s.game.currState = s.game.drawState
+	// 	return nil
+	// }
 
 	round.NewlyDrawnTile = tile
-
-	if s.checkAndResolveKongFromHand(tile) || s.checkAndResolveKongFromMelds(tile) {
-		s.game.currState = s.game.drawState
-		return nil
-	}
-
 	s.game.currState = s.game.checkWinState
 	return nil
 }
@@ -97,6 +112,8 @@ func (s *DrawState) checkAndResolveKongFromMelds(tile *domain.Tile) (hasKong boo
 		meld.Tiles = append(meld.Tiles, tile)
 		meld.Type = domain.MeldKong
 		meld.Kong = domain.KongAdded
+
+		player.RemoveFromHand(tile.ID)
 	}
 
 	return
