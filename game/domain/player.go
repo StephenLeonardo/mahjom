@@ -153,3 +153,69 @@ func (p *PlayerState) RemoveFromDiscards(id TileID) (*Tile, bool) {
 	}
 	return nil, false
 }
+
+func (p *PlayerState) GetCurrentTai() int64 {
+	// 1. Collect all tiles from hand and declared melds
+	var tiles []*Tile
+	tiles = append(tiles, p.Hand...)
+	for _, meld := range p.Melds {
+		tiles = append(tiles, meld.Tiles...)
+	}
+
+	var totalTai int64 = 0
+
+	// 2. Calculate Animals Bonus
+	// (Standard rule: 1 Tai per animal, or 5 Tai total if you collect all 4)
+	animalCount := len(p.Animals)
+	if animalCount == 4 {
+		totalTai += 5
+	} else {
+		totalTai += int64(animalCount)
+	}
+
+	// 3. Calculate Flowers Bonus
+	// (Awards 1 Tai for each flower/season matching the player's seat position)
+	for _, f := range p.Flowers {
+		if f.Rank == p.GetPositionRank() {
+			totalTai += 1
+		}
+	}
+
+	// 4. Evaluate registered Tai rules
+	var maxPatternTai int64 = 0
+
+	for name, rule := range TaiRules {
+		tai := rule(tiles, p)
+		if tai > 0 {
+			if name == "PingHu" || name == "PengPengHu" {
+				if tai > maxPatternTai {
+					maxPatternTai = tai
+				}
+			} else {
+				// Additive rules (like HonorPungs) stack directly
+				totalTai += tai
+			}
+		}
+	}
+
+	// Add the highest-scoring primary hand pattern
+	totalTai += maxPatternTai
+
+	return totalTai
+}
+
+func (p *PlayerState) GetPositionRank() uint8 {
+	switch p.Position {
+	case "E":
+		return 0
+	case "S":
+		return 1
+	case "W":
+		return 2
+	case "N":
+		return 3
+	}
+
+	// shouldn't be possible to reach here
+	return 0
+}

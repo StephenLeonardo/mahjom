@@ -21,8 +21,12 @@ func (s *CheckWinState) Resolve() error {
 	}
 
 	if domain.IsSimpleWinningHand(s.game.State.GetCurrentPlayerState()) {
-		s.game.currState = s.game.winState
-		return nil
+		// only win if player's Tai is enough
+		playerTai := s.game.State.GetCurrentPlayerState().GetCurrentTai()
+		if playerTai >= int64(s.game.Config.MinTai) {
+			s.game.currState = s.game.winState
+			return nil
+		}
 	}
 
 	s.game.currState = s.game.discardState

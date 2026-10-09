@@ -1,8 +1,8 @@
 package domain
 
 type tileKey struct {
-	suit Suit
-	rank uint8
+	Suit Suit
+	Rank uint8
 }
 
 // IsSimpleWinningHand reports whether the player's committed melds plus
@@ -55,8 +55,8 @@ func tileCounts(hand []*Tile) map[tileKey]int {
 
 	for _, t := range hand {
 		key := tileKey{
-			suit: t.Suit,
-			rank: t.Rank,
+			Suit: t.Suit,
+			Rank: t.Rank,
 		}
 
 		counts[key]++
@@ -118,18 +118,18 @@ func canFormWinningHand(
 	// Option 2: use this tile as the beginning of a Chow
 	// ---------------------------------------------------------
 
-	if isSuited(key.suit) &&
-		key.rank >= 1 &&
-		key.rank <= 7 {
+	if isSuited(key.Suit) &&
+		key.Rank >= 1 &&
+		key.Rank <= 7 {
 
 		second := tileKey{
-			suit: key.suit,
-			rank: key.rank + 1,
+			Suit: key.Suit,
+			Rank: key.Rank + 1,
 		}
 
 		third := tileKey{
-			suit: key.suit,
-			rank: key.rank + 2,
+			Suit: key.Suit,
+			Rank: key.Rank + 2,
 		}
 
 		if counts[second] > 0 && counts[third] > 0 {
