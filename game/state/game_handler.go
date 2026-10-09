@@ -113,12 +113,14 @@ func Play() {
 			eventLog.CurrPosition = g.State.GetCurrentPlayerState().Position
 			state := g.currState.GetStateName()
 			eventLog.Action = state
+			eventLog.MinTai = int(g.Config.MinTai)
 
 			if err := g.currState.Resolve(); err != nil {
 				fmt.Println("Error: ", err)
 			}
 
 			eventLog.RemainingDrawTiles = int(g.State.Wall.Remaining())
+			eventLog.CurrentTai = int(g.State.GetCurrentPlayerState().GetCurrentTai())
 
 			switch state {
 			case DISCARD_STATE:

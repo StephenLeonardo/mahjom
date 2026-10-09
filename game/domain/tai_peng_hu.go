@@ -2,7 +2,7 @@ package domain
 
 // 4 points
 // CheckPengHu checks for Big Ping Hu (平胡), which awards 4 points (Tai) in Singaporean Mahjong.
-func CheckPengHu(tiles []*Tile) int64 {
+func CheckPengHu(tiles []*Tile, _ *PlayerState) int64 {
 	if len(tiles) != 14 {
 		return 0
 	}

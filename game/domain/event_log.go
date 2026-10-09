@@ -11,6 +11,8 @@ type EventLog struct {
 	Meld               *Meld           `json:"meld,omitempty"`
 	RemainingDrawTiles int             `json:"remainingDrawTiles"`
 	Players            [4]*PlayerState `json:"players"`
+	CurrentTai         int             `json:"currentTai"`
+	MinTai             int             `json:"minTai"`
 	// PlayerDiscards   [4][]*Tile
 	// PlayerBonusTiles [4][]*Tile
 	// PlayerMelds      [4][]*Meld
