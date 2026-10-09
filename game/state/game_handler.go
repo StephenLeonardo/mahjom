@@ -20,7 +20,6 @@ type GameHandler struct {
 	Seed   int
 	Config *domain.GameConfig
 	State  *domain.GameState
-	// Players [4]*domain.PlayerState
 
 	currState IStateActionables
 
@@ -105,7 +104,9 @@ func Play() {
 	for range 100 {
 		seed := uint64(time.Now().Nanosecond())
 		// seed := uint64(1786119936)
-		g := NewGameHandler("gameID", &domain.GameConfig{}, seed)
+		g := NewGameHandler("gameID", &domain.GameConfig{
+			MinTai: 2,
+		}, seed)
 		eventLog := g.EventLog
 
 		for !g.State.IsGameEnd() {
